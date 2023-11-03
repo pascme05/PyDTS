@@ -138,30 +138,31 @@ but to illustrate how good a baseline methodology provided by the PyDTS toolkit 
 respective tasks.
 
 ## Energy Disaggregation
-For energy disaggregation, we consider again the AMPDs2 dataset from Tutorial 1 and compare the results for a 
-scenario of 10-fold cross-validation using the five most used appliances in the dataset, namely ‘DWE’, 
-'FRE', 'HPE', ‘WOE’, and 'CDE'.  CNN has been used as it was found to work best for the disaggregation 
-task. The detailed setup files can be found under \setup and the numerical results are tabulated below. 
+For energy disaggregation we consider again the AMPDs2 dataset from Tutorial 1 and compare the results for a scenario of
+10-fold cross validation using the five most used appliances in the dataset, namely ‘DWE’, 'FRE', 'HPE', ‘WOE’, and
+'CDE'. CNN has been used as it was found to work best for the disaggregation task. The detailed setup files are the
+same as in the BaseNILM toolkit (https://github.com/pascme05/BaseNILM) and the numerical results are tabulated
+in Table 10.
 
-| Device | R2-Score | RMSE (W) | MSE (W^2) | MAE (W) | MAX (W)     | CNN (DL) |
-|--------|----------|----------|-----------|---------|-------------|----------|
-| DWE    | 2717.31  | 3092.78  | 725.93    | 996.56  | **685.31**  | 800.04   | 
-| FRE    | 2937.16  | 3603.52  | 2360.53   | 2096.60 | **1988.47** | 2006.85  | 
-| HPE    | 2937.16  | 3603.52  | 2360.53   | 2096.60 | **1988.47** | 2006.85  | 
-| WOE    | 2937.16  | 3603.52  | 2360.53   | 2096.60 | **1988.47** | 2006.85  | 
-| CDE    | 2937.16  | 3603.52  | 2360.53   | 2096.60 | **1988.47** | 2006.85  | 
-| Avg    | 2827.24  | 3348.15  | 1543.23   | 1546.58 | **1336.89** | 1403.45  |
+| Device | TECA   | RMSE (A) | MSE (A^2) | MAE (A) | MAX (A) |
+|--------|--------|----------|-----------|---------|---------|
+| DWE    | 49.61% | 0.87     | 0.93      | 0.13    | 6.60    | 
+| FRE    | 97.52% | 0.11     | 0.33      | 0.06    | 2.96    | 
+| HPE    | 98.02% | 0.59     | 0.77      | 0.07    | 47.90   | 
+| WOE    | 93.83% | 0.44     | 0.66      | 0.02    | 29.89   | 
+| CDE    | 97.60% | 0.36     | 0.60      | 0.02    | 39.96   | 
+| Avg    | 87.31% | 0.47     | 0.69      | 0.06    | 25.46   |
 
 For the comparison with the literature three different devices have been considered namely 'HPE', ‘WOE’, and 'CDE', 
 the results are provided in the Table below.
 
-| REF   | Year | Model | MAE (W) | MSE (W^2) | R2-Score |
-|-------|------|-------|---------|-----------|----------|
-| [7]   | 2021 | GAN   | 35.3    | -         | -        |
-| [8]   | 2020 | GAN   | 38.5    | -         | -        |
-| [9]   | 2019 | LSTM  | 38.6    | -         | -        |
-| [10]  | 2018 | CNN   | 63.4    | -         | -        |
-| PyDTS | 2023 | CNN   | -       | -         | -        |
+| REF   | Year | Model | TECA   | RMSE (W) | MAE(W) |
+|-------|------|-------|--------|----------|--------|
+| [7]   | 2021 | GAN   | -      | 35.3     | -      |
+| [8]   | 2020 | GAN   | -      | 38.5     | -      |
+| [9]   | 2019 | LSTM  | -      | 38.6     | -      |
+| [10]  | 2018 | CNN   | -      | 63.4     | -      |
+| PyDTS | 2023 | CNN   | 91.22% | 44.7     | 2.32   |
 
 ## Temperature Prediction
 For temperature prediction, we consider again the Motor Temperature dataset from tutorial 3 and compare the results 
