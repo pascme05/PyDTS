@@ -59,7 +59,7 @@ setupExp['author'] = 'Pascal Schirmer'                                          
 # General
 # ------------------------------------------
 setupExp['sim'] = 0                                                                                                     # 0) simulation, 1) optimisation hyperparameters, 2) optimising grid
-setupExp['gpu'] = 1                                                                                                     # 0) cpu, 1) gpu
+setupExp['gpu'] = 0                                                                                                     # 0) cpu, 1) gpu
 setupExp['warn'] = 3                                                                                                    # 0) all msg are logged, 1) INFO not logged, 2) INFO and WARN not logged, 3) disabled
 
 # ------------------------------------------
