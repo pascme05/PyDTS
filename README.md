@@ -190,7 +190,7 @@ with the previously published literature a comparison of average errors was made
 | [13]  | 2023 | TNN   | **2.87**  | **6.02** | 15       |
 | PyDTS | 2023 | CNN   | 4.53      | 10.91    | 13       |
 
-As can be seen in the Table above the results obtained from the baseline CNN model (B) implemented in PyDTS are comparable to 
+As can be seen in the Table above the results obtained from the baseline CNN model implemented in PyDTS are comparable to 
 the results obtained with other machine- or deep-learning architectures. Only physically informed approaches like thermal
 neural networks [13] perform significantly better.
 
