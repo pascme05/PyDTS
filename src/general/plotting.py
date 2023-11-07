@@ -45,22 +45,33 @@ def plotting(dataRaw, data, dataPred, resultsAvg, feaScore, feaError, setupDat):
     accLabels1 = ['ACC', 'F1', 'R2', 'TECA']
     accLabels2 = ['RMSE', 'MAE', 'SAE']
     outLabel = setupDat['out']
-    inpLabel = setupDat['inp']
+    inpLabel = dataRaw['T']['X'].columns
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
     col_max = 20
+    row_max = 7
     cols = len(dataRaw['T']['X'].axes[1])
 
     # ==============================================================================
     # Variables
     # ==============================================================================
     t = np.linspace(0, len(data['y']), len(data['y'])) / 3600 / setupDat['fs']
+    traw = np.linspace(0, len(dataRaw['T']['y']), len(dataRaw['T']['y'])) / 3600 / setupDat['fs']
     SAE = abs(resultsAvg[8] - resultsAvg[7]) / resultsAvg[8]
     accResults = [resultsAvg[0], resultsAvg[1], resultsAvg[2], resultsAvg[3], resultsAvg[4], resultsAvg[5], SAE]
 
     ###################################################################################################################
     # Preprocessing
     ###################################################################################################################
+    # ==============================================================================
+    # Limit Cols
+    # ==============================================================================
+    if row_max > cols:
+        row_max = cols
+
+    # ==============================================================================
+    # Limit Rows
+    # ==============================================================================
     if cols > col_max:
         cols = col_max
 
@@ -106,6 +117,28 @@ def plotting(dataRaw, data, dataPred, resultsAvg, feaScore, feaError, setupDat):
     plt.title("Feature Ranking using RF")
     plt.ylabel("Mean Accuracy")
     plt.grid('on')
+
+    # ==============================================================================
+    # Input Features Time Domain
+    # ==============================================================================
+    # ------------------------------------------
+    # General
+    # ------------------------------------------
+    plt.figure()
+    txt = "Time-domain plots of input features"
+    plt.suptitle(txt, size=18)
+    plt.subplots_adjust(hspace=0.35, wspace=0.35, left=0.075, right=0.925, top=0.90, bottom=0.075)
+
+    # ------------------------------------------
+    # Plotting
+    # ------------------------------------------
+    for i in range(0, row_max):
+        plt.subplot(row_max, 1, i+1)
+        plt.plot(traw, dataRaw['T']['X'].iloc[:, i])
+        plt.title('Input Feature: ' + inpLabel[i])
+        plt.xticks([])
+        plt.ylabel(inpLabel[i] + ' (' + setupDat['inpUnits'][inpLabel[i]][0] + ')')
+        plt.grid('on')
 
     # ==============================================================================
     # Average Performance
