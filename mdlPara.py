@@ -112,6 +112,7 @@ def mdlPara(setupMdl):
     # ==============================================================================
     setupMdl['feat_roll']['EWMA'] = [0]
     setupMdl['feat_roll']['EWMS'] = [0]
+    setupMdl['feat_roll']['diff'] = 1
 
     # ==============================================================================
     # Statistical (frame based)
@@ -130,8 +131,6 @@ def mdlPara(setupMdl):
     setupMdl['feat']['Range'] = 1
     setupMdl['feat']['3rdMoment'] = 1
     setupMdl['feat']['4thMoment'] = 1
-    setupMdl['feat']['dt'] = 1
-    setupMdl['feat']['dtdt'] = 1
 
     ###################################################################################################################
     # Return
