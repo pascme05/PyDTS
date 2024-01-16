@@ -26,6 +26,8 @@ from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 import joblib
 import numpy as np
+import time
+from sys import getsizeof
 
 
 #######################################################################################################################
@@ -139,11 +141,29 @@ def trainMdlML(data, setupPar, setupMdl, setupExp):
         print("INFO: Model does not exist and will be created!")
 
     # ==============================================================================
+    # Start timer
+    # ==============================================================================
+    start = time.time()
+
+    # ==============================================================================
     # Train
     # ==============================================================================
     mdl.fit(data['T']['X'], data['T']['y'])
 
     # ==============================================================================
+    # End timer
+    # ==============================================================================
+    ende = time.time()
+    trainTime = (ende - start)
+
+    # ==============================================================================
     # Save model
     # ==============================================================================
     joblib.dump(mdl, mdlName)
+
+    ###################################################################################################################
+    # Output
+    ###################################################################################################################
+    print("INFO: Total training time (sec): %.2f" % trainTime)
+    print("INFO: Training time per sample (ms): %.2f" % (trainTime / data['T']['X'].shape[0] * 1000))
+    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))

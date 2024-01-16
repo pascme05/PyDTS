@@ -26,6 +26,8 @@ import tensorflow as tf
 import numpy as np
 import os
 from sklearn.utils import class_weight
+import time
+from sys import getsizeof
 
 
 #######################################################################################################################
@@ -199,8 +201,26 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
                                                         mode='auto', save_freq=5 * EVAL))
 
     # ==============================================================================
+    # Start timer
+    # ==============================================================================
+    start = time.time()
+
+    # ==============================================================================
     # Train
     # ==============================================================================
     mdl.fit(train, epochs=EPOCHS, steps_per_epoch=EVAL, validation_data=val, validation_steps=VALSTEPS,
             use_multiprocessing=True, verbose=VERBOSE, shuffle=SHUFFLE, batch_size=BATCH_SIZE, callbacks=callbacks,
             class_weight=class_weights)
+
+    # ==============================================================================
+    # End timer
+    # ==============================================================================
+    ende = time.time()
+    trainTime = (ende - start)
+
+    ###################################################################################################################
+    # Output
+    ###################################################################################################################
+    print("INFO: Total training time (sec): %.2f" % trainTime)
+    print("INFO: Training time per sample (ms): %.2f" % (trainTime / data['T']['X'].shape[0] * 1000))
+    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))

@@ -6,7 +6,7 @@ tensorflow==2.5.0
 joblib==1.1.0
 tfest
 nfoursid==1.0.1
-matplotlib
+matplotlib==3.6
 seaborn
 openpyxl
 keras-tuner==1.3.0

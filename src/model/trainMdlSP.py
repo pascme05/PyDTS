@@ -25,12 +25,14 @@ from nfoursid.nfoursid import NFourSID
 import pickle
 import pandas as pd
 import tfest
+import time
+from sys import getsizeof
 
 
 #######################################################################################################################
 # Function
 #######################################################################################################################
-def trainMdlSP(data, time, setupPar, setupMdl, setupExp):
+def trainMdlSP(data, t, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     # MSG IN
     ###################################################################################################################
@@ -83,6 +85,11 @@ def trainMdlSP(data, time, setupPar, setupMdl, setupExp):
     # Calculation
     ###################################################################################################################
     # ==============================================================================
+    # Start timer
+    # ==============================================================================
+    start = time.time()
+
+    # ==============================================================================
     # State-Space Model
     # ==============================================================================
     if setupPar['model'] == 'SS':
@@ -96,8 +103,14 @@ def trainMdlSP(data, time, setupPar, setupMdl, setupExp):
     if setupPar['model'] == 'TF':
         mdl = tfest.tfest(u=data['T']['X'][:, 0], y=data['T']['y'][:, 0])
         mdl.estimate(setupMdl['SP_TF_zeros'], setupMdl['SP_TF_poles'], method=setupMdl['SP_TF_method'],
-                     l1=setupMdl['SP_TF_l1'], time=time[-1] - time[0])
+                     l1=setupMdl['SP_TF_l1'], time=t[-1] - t[0])
         mdl = mdl.get_transfer_function()
+
+    # ==============================================================================
+    # End timer
+    # ==============================================================================
+    ende = time.time()
+    trainTime = (ende - start)
 
     ###################################################################################################################
     # Post-Processing
@@ -108,3 +121,10 @@ def trainMdlSP(data, time, setupPar, setupMdl, setupExp):
     f = open(mdlName, 'wb')
     pickle.dump(mdl, f)
     f.close()
+
+    ###################################################################################################################
+    # Output
+    ###################################################################################################################
+    print("INFO: Total training time (sec): %.2f" % trainTime)
+    print("INFO: Training time per sample (ms): %.2f" % (trainTime/data['T']['X'].shape[0]*1000))
+    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
