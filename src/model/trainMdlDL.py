@@ -138,6 +138,7 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     if setupPar['model'] == "LSTM":
         mdl = tfMdlLSTM(data['T']['X'], out, activation)
+    mdl.summary()
 
     ###################################################################################################################
     # Loading

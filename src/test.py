@@ -30,6 +30,7 @@ from src.general.printResults import printResults
 from src.general.save import save
 from src.general.featureRank import featureRank
 from src.general.adaptDim import adaptDim
+from src.data.summaryData import summaryData
 
 # ==============================================================================
 # External
@@ -61,6 +62,11 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     print("------------------------------------------")
     print("START: Preprocessing")
     print("------------------------------------------")
+
+    # ==============================================================================
+    # Data Summary
+    # ==============================================================================
+    summaryData(data['T']['X'], data['T']['y'], setupDat)
 
     # ==============================================================================
     # Testing Data
@@ -242,7 +248,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # ------------------------------------------
     # Ranking
     # ------------------------------------------
-    [feaScore, feaError] = featureRank(data['T']['X'], data['T']['y'], setupDat, setupMdl)
+    [feaScore, feaError] = featureRank(data['T']['X'], data['T']['y'], setupDat, setupMdl, setupPar)
 
     # ==============================================================================
     # Console

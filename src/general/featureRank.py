@@ -30,7 +30,7 @@ import pandas as pd
 #######################################################################################################################
 # Function
 #######################################################################################################################
-def featureRank(X, y, setupDat, setupMdl):
+def featureRank(X, y, setupDat, setupMdl, setupPar):
     ###################################################################################################################
     # MSG IN
     ###################################################################################################################
@@ -70,11 +70,15 @@ def featureRank(X, y, setupDat, setupMdl):
     # ==============================================================================
     # Calc
     # ==============================================================================
-    for i in range(0, len(setupDat['out'])):
-        mdl = mdl.fit(X_train.values, np.squeeze(y_train.values[:, i]))
-        result = permutation_importance(mdl, X_test.values, np.squeeze(y_test.values[:, i]), n_repeats=10, random_state=42, n_jobs=2)
-        scores[:, i] = result.importances_mean
-        err[:, i] = result.importances_std
+    if setupPar['rank'] == 1:
+        print("INFO: Running Feature Ranking")
+        for i in range(0, len(setupDat['out'])):
+            mdl = mdl.fit(X_train.values, np.squeeze(y_train.values[:, i]))
+            result = permutation_importance(mdl, X_test.values, np.squeeze(y_test.values[:, i]), n_repeats=10, random_state=42, n_jobs=2)
+            scores[:, i] = result.importances_mean
+            err[:, i] = result.importances_std
+    else:
+        print("INFO: Feature ranking aborted")
 
     # ==============================================================================
     # Rank

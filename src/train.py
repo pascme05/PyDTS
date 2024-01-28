@@ -25,6 +25,7 @@ from src.model.trainMdlDL import trainMdlDL
 from src.model.trainMdlML import trainMdlML
 from src.model.trainMdlSP import trainMdlSP
 from src.general.adaptDim import adaptDim
+from src.data.summaryData import summaryData
 
 # ==============================================================================
 # External
@@ -58,6 +59,11 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     print("------------------------------------------")
 
     # ==============================================================================
+    # Data Summary
+    # ==============================================================================
+    summaryData(data['T']['X'], data['T']['y'], setupDat)
+
+    # ==============================================================================
     # Calc
     # ==============================================================================
     [data['T'], t, _] = preprocess(data['T'], copy.deepcopy(setupDat), setupPar)
@@ -82,10 +88,16 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # Calc
     # ==============================================================================
     if setupPar['frame'] == 1:
-        dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'])
-        dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'])
-        dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'])
-        dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'])
+        if setupPar['overlap'] == -1:
+            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], 0)
+            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], 0)
+            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], 0)
+            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], 0)
+        else:
+            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'])
+            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'])
+            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'])
+            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'])
     else:
         dataTrain['T']['X'] = data['T']['X'].values
         dataTrain['T']['y'] = data['T']['y'].values

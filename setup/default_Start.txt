@@ -152,6 +152,7 @@ setupPar['nDim'] = 3                                                            
 # ------------------------------------------
 # Postprocessing
 # ------------------------------------------
+setupPar['rank'] = 0                                                                                                     # 0) no feature ranking, 1) feature ranking
 setupPar['outMin'] = -1e9                                                                                                # limited output values (minimum)
 setupPar['outMax'] = +1e9                                                                                                # limited output values (maximum)
 

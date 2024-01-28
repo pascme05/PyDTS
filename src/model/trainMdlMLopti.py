@@ -53,16 +53,25 @@ def trainMdlMLopti(data, setupPar):
     # KNN
     # ------------------------------------------
     if setupPar['model'] == "KNN":
-        param_grid = {'n_neighbors': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        if data['T']['y'].ndim == 1:
+            param_grid = {'n_neighbors': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
+        else:
+            param_grid = {'estimator__n_neighbors': [100, 105, 110, 115, 120, 125, 130, 135, 140, 145, 150]}
 
     # ------------------------------------------
     # RF
     # ------------------------------------------
     if setupPar['model'] == "RF":
-        param_grid = {'max_depth': [3, 5, 10],
-                      'min_samples_split': [2, 5, 10],
-                      'random_state': [0],
-                      'n_estimators': [16, 32, 64]}
+        if data['T']['y'].ndim == 1:
+            param_grid = {'max_depth': [3, 5, 10],
+                          'min_samples_split': [2, 5, 10],
+                          'random_state': [0],
+                          'n_estimators': [16, 32, 64]}
+        else:
+            param_grid = {'estimator__max_depth': [5, 10, 15, 20, 25],
+                          'estimator__min_samples_split': [2, 4, 6, 8, 10],
+                          'estimator__random_state': [0],
+                          'estimator__n_estimators': [16, 32, 64, 128, 256]}
 
     # ------------------------------------------
     # SVM
@@ -70,13 +79,13 @@ def trainMdlMLopti(data, setupPar):
     if setupPar['model'] == "SVM":
         if setupPar['method'] == 0:
             param_grid = {'kernel': ('linear', 'rbf', 'poly'),
-                          'C': [1, 10, 100],
-                          'gamma': [0.01, 0.1, 1],
+                          'C': [1, 2, 5, 10, 20, 50, 100],
+                          'gamma': [0.001, 0.01, 0.02, 0.1, 0.2, 1],
                           'epsilon': [0.01, 0.1, 0.5]}
         else:
             param_grid = {'kernel': ('linear', 'rbf', 'poly'),
-                          'C': [1, 10, 100],
-                          'gamma': [0.01, 0.1, 1]}
+                          'C': [1, 2, 5, 10, 20, 50, 100],
+                          'gamma': [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1]}
 
     ###################################################################################################################
     # Pre-Processing
@@ -148,10 +157,18 @@ def trainMdlMLopti(data, setupPar):
     # ==============================================================================
     # Fitting
     # ==============================================================================
+    # ------------------------------------------
+    # Init
+    # ------------------------------------------
     grid = GridSearchCV(mdl, param_grid, refit=True, verbose=3, n_jobs=-1)
 
-    # fitting the model for grid search
-    grid.fit(data['T']['X'], data['T']['y'])
+    # ------------------------------------------
+    # Search
+    # ------------------------------------------
+    if setupPar['method'] == 0:
+        grid.fit(data['T']['X'], data['T']['y'])
+    else:
+        grid.fit(data['T']['X'], data['T']['y'].astype(int))
 
     # ==============================================================================
     # Best Model

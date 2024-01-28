@@ -54,7 +54,7 @@ def createSeq(data, setupPar):
     # Seq2seq or Seq2Subseq
     # ==============================================================================
     if setupPar['outseq'] >= 1:
-        if dim == 1:
+        if dim == 2:
             delta = int((setupPar['window'] - setupPar['outseq']) / 2)
             data = np.squeeze(data[:, delta:setupPar['window'] - delta])
         else:
@@ -68,7 +68,7 @@ def createSeq(data, setupPar):
         if sel < 0:
             data = np.nanmean(data, axis=1)
         else:
-            if dim == 1:
+            if dim == 2:
                 data = np.squeeze(data[:, int(sel)])
             else:
                 data = np.squeeze(data[:, int(sel), :])

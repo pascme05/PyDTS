@@ -2,7 +2,7 @@
 #######################################################################################################################
 # Title:        PyDTS (Python Deep Timeseries Simulation)
 # Topic:        Black-Box Modeling
-# File:         mdlPara
+# File:         mdlParaJournal
 # Date:         03.11.2023
 # Author:       Dr. Pascal A. Schirmer
 # Version:      V.0.1
@@ -24,7 +24,7 @@
 #######################################################################################################################
 # Function
 #######################################################################################################################
-def mdlPara(setupMdl):
+def mdlParaJournal(setupMdl):
     ###################################################################################################################
     # Init
     ###################################################################################################################
@@ -83,9 +83,9 @@ def mdlPara(setupMdl):
     # ------------------------------------------
     # RF
     # ------------------------------------------
-    setupMdl['SK_RF_depth'] = 5                                                                                         # maximum depth of the tree
+    setupMdl['SK_RF_depth'] = 10                                                                                        # maximum depth of the tree
     setupMdl['SK_RF_state'] = 0                                                                                         # number of states
-    setupMdl['SK_RF_estimators'] = 16                                                                                   # number of trees in the forest
+    setupMdl['SK_RF_estimators'] = 128                                                                                  # number of trees in the forest
 
     # ------------------------------------------
     # SVM
@@ -98,7 +98,7 @@ def mdlPara(setupMdl):
     # ------------------------------------------
     # KNN
     # ------------------------------------------
-    setupMdl['SK_KNN_neighbors'] = 5                                                                                    # number of neighbors
+    setupMdl['SK_KNN_neighbors'] = 140                                                                                  # number of neighbors
 
     # ==============================================================================
     # Deep Learning (DL) Models

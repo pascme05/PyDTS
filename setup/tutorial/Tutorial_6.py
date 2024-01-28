@@ -1,8 +1,8 @@
 #######################################################################################################################
 #######################################################################################################################
 # Title:        PyDTS (Python Deep Timeseries Simulation)
-# Topic:        Black-Box Modeling (Non-Linear Modelling)
-# File:         Tutorial_3
+# Topic:        Black-Box Modeling (Cross-Domain Modelling)
+# File:         Tutorial_6
 # Date:         03.11.2023
 # Author:       Dr. Pascal A. Schirmer
 # Version:      V.0.1
@@ -52,7 +52,7 @@ setupPath = initPath('PyDTS')
 # ------------------------------------------
 # Names
 # ------------------------------------------
-setupExp['name'] = 'Tutorial_3'                                                                                         # Name of the simulation
+setupExp['name'] = 'Tutorial_6'                                                                                         # Name of the simulation
 setupExp['author'] = 'Pascal Schirmer'                                                                                  # Name of the author
 
 # ------------------------------------------
@@ -89,26 +89,26 @@ setupDat['batch'] = 100000                                                      
 setupDat['Shuffle'] = False                                                                                             # False: no shuffling, True: shuffling data when splitting
 setupDat['rT'] = 0.9                                                                                                    # training proportion (0, 1)
 setupDat['rV'] = 0.2                                                                                                    # validation proportion (0, 1) as percentage from training proportion
-setupDat['idT'] = [60]                                                                                                  # list of testing ids for method 3)
-setupDat['idV'] = [10, 48, 63]                                                                                          # list of validation ids for method 3)
+setupDat['idT'] = [36, 37, 39]                                                                                          # list of testing ids for method 3)
+setupDat['idV'] = [33, 34, 35]                                                                                          # list of validation ids for method 3)
 
 # ------------------------------------------
 # Datasets
 # ------------------------------------------
-setupDat['train'] = ['Tutorial_3']                                                                                      # name of training datasets (multiple)
-setupDat['test'] = 'Tutorial_3'                                                                                         # name of testing datasets (one)
-setupDat['val'] = 'Tutorial_3'                                                                                          # name of validation dataset (one)
+setupDat['train'] = ['Tutorial_6']                                                                                      # name of training datasets (multiple)
+setupDat['test'] = 'Tutorial_6'                                                                                         # name of testing datasets (one)
+setupDat['val'] = 'Tutorial_6'                                                                                          # name of validation dataset (one)
 
 # ------------------------------------------
 # Input/ Output Mapping
 # ------------------------------------------
-setupDat['inp'] = []                                                                                                    # names of the input variables (X) if empty all
-setupDat['out'] = ['T_sw', 'T_st', 'T_so', 'T_rm']                                                                      # names of the output variables (y)
+setupDat['inp'] = ['v', 'T', 'V_DC', 'T_a2']                                                                            # names of the input variables (X) if empty all
+setupDat['out'] = ['I_DC']                                                                                              # names of the output variables (y)
 
 # ------------------------------------------
 # Sampling
 # ------------------------------------------
-setupDat['fs'] = 1                                                                                                      # sampling frequency (Hz)
+setupDat['fs'] = 10                                                                                                     # sampling frequency (Hz)
 setupDat['lim'] = 0                                                                                                     # 0) data is not limited, x) limited to x samples
 
 # ------------------------------------------
@@ -123,7 +123,7 @@ setupDat['inpFil'] = 0                                                          
 setupDat['outFil'] = 0                                                                                                  # filtering output data (y): 0) None, 1) Median
 setupDat['inpFilLen'] = 61                                                                                              # filter length input data (samples)
 setupDat['outFilLen'] = 61                                                                                              # filter length output data (samples)
-setupDat['threshold'] = 20                                                                                              # 0) no threshold x) threshold to transform regressio into classification data
+setupDat['threshold'] = 0.1                                                                                             # 0) no threshold x) threshold to transform regressio into classification data
 setupDat['balance'] = 0                                                                                                 # 0) no balancing 1) balancing based classes, x) balancing based on x bins
 
 # ==============================================================================
@@ -134,7 +134,7 @@ setupDat['balance'] = 0                                                         
 # ------------------------------------------
 setupPar['method'] = 0                                                                                                  # 0) regression, 1) classification
 setupPar['solver'] = 'DL'                                                                                               # solver 1) 'SP': Signal Processing, 2) 'ML': Machine Learning, 3) 'DL': Deep Learning
-setupPar['model'] = 'DNN'                                                                                               # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN
+setupPar['model'] = 'LSTM'                                                                                              # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN
 
 # ------------------------------------------
 # Framing and Features
@@ -143,15 +143,16 @@ setupPar['lag'] = 0                                                             
 setupPar['frame'] = 1                                                                                                   # 0) no framing, 1) framing
 setupPar['feat'] = 0                                                                                                    # 0) raw data values, 1) statistical features (frame based), 2) statistical features (input based), 3) input and frame based features
 setupPar['init'] = 0                                                                                                    # 0) no initial values 1) adding initial values from y
-setupPar['window'] = 1000                                                                                               # window length (samples)
-setupPar['overlap'] = 990                                                                                               # overlap between consecutive windows (no overlap during test if -1)
+setupPar['window'] = 300                                                                                                # window length (samples)
+setupPar['overlap'] = 290                                                                                               # overlap between consecutive windows (no overlap during test if -1)
 setupPar['outseq'] = 0                                                                                                  # 0) seq2point, x) length of the subsequence in samples
-setupPar['yFocus'] = 999                                                                                                # focus point for seq2point (average if -1)
+setupPar['yFocus'] = 299                                                                                                # focus point for seq2point (average if -1)
 setupPar['nDim'] = 3                                                                                                    # input dimension for model 2) or 3)
 
 # ------------------------------------------
 # Postprocessing
 # ------------------------------------------
+setupPar['rank'] = 0                                                                                                     # 0) no feature ranking, 1) feature ranking
 setupPar['outMin'] = -1e9                                                                                                # limited output values (minimum)
 setupPar['outMax'] = +1e9                                                                                                # limited output values (maximum)
 
