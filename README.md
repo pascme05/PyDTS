@@ -202,7 +202,7 @@ toolkit or spot any mistake, please contact me via: p.schirmer@herts.ac.uk
 
 
 # License
-The software framework is provided under the MIT license.
+The software framework is provided under the Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0) license.
 
 
 # Version History
