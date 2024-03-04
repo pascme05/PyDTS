@@ -68,6 +68,13 @@ def postprocess(data, dataPred, setupPar, setupDat):
     [dataPred['X'], dataPred['y']] = normData(dataPred['X'], dataPred['y'], setupDat, 1)
 
     # ==============================================================================
+    # Forecasting
+    # ==============================================================================
+    if setupPar['lag'] != 0:
+        data['y'][-abs(setupPar['lag']):] = data['y'][-abs(setupPar['lag'])]
+        dataPred['y'][-abs(setupPar['lag']):] = dataPred['y'][-abs(setupPar['lag'])]
+
+    # ==============================================================================
     # Limiting
     # ==============================================================================
     dataPred['y'][dataPred['y'] < setupPar['outMin']] = setupPar['outMin']
