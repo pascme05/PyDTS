@@ -4,17 +4,15 @@ input and output values. The current version includes statistical, machine learn
 time-series modeling. The aim is to provide a better understanding of time-series modeling problems such as: forecasting,
 denoising, non-linear SISO and MIMO modeling, degradation modeling, and anomaly detection. It is clear, that this toolkit
 cannot be anywhere near the capabilities  of commercial software but will hopefully provide a better understanding due
-to the freely available source code. The toolkit is obviously not complete; thus, suggestions are always welcome.
+to the freely available source code. The toolkit is not complete; thus, suggestions are always welcome.
 
 
 # Publication and Citation
-Since a significant amount of the code for denoising or energy disaggregation is abstracted from the BaseNILM toolkit
-please cite the following paper when using PyDTS for energy disaggregation or Non-Intrusive Load Monitoring:
+Please cite the following paper when using PyDTS for your work
 
-P. A. Schirmer and I. Mporas, "Non-Intrusive Load Monitoring: A Review," in IEEE Transactions on Smart Grid, 2022,
-doi: 10.1109/TSG.2022.3189598
+Schirmer, P.A.; Mporas, I. PyDTS: A Python Toolkit for Deep Learning Time Series Modelling. Entropy 2024, 26, 311. https://doi.org/10.3390/e26040311
 
-(https://ieeexplore.ieee.org/document/9820770)
+(https://www.mdpi.com/1099-4300/26/4/311)
 
 Furthermore, please also cite the corresponding publicly available datasets.
 
