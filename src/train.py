@@ -193,6 +193,18 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     elif setupPar['solver'] == 'DL':
         trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
 
+    # ------------------------------------------
+    # Short-Time-Forecasting
+    # ------------------------------------------
+    elif setupPar['solver'] == 'SF':
+        trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+
+    # ------------------------------------------
+    # Closed Loop Modeling
+    # ------------------------------------------
+    elif setupPar['solver'] == 'CL':
+        trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+
     ###################################################################################################################
     # MSG Out
     ###################################################################################################################

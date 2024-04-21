@@ -192,6 +192,18 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     elif setupPar['solver'] == 'DL':
         dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
 
+    # ------------------------------------------
+    # Short-Time-Forecasting
+    # ------------------------------------------
+    elif setupPar['solver'] == 'SF':
+        dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+
+    # ------------------------------------------
+    # Closed Loop Modeling
+    # ------------------------------------------
+    elif setupPar['solver'] == 'CL':
+        dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+
     # ==============================================================================
     # Msg
     # ==============================================================================
