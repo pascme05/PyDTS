@@ -136,7 +136,7 @@ setupDat['balance'] = 0                                                         
 # ------------------------------------------
 setupPar['method'] = 0                                                                                                  # 0) regression, 1) classification
 setupPar['solver'] = 'DL'                                                                                               # solver 1) 'SP': Signal Processing, 2) 'ML': Machine Learning, 3) 'DL': Deep Learning, 4) 'SF': Short Term Time-Series Forecasting, 5) 'CL': Closed Loop
-setupPar['model'] = 'DNN'                                                                                               # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN, 4) SF: NHITS
+setupPar['model'] = 'DNN'                                                                                               # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN, 4) SF: LSTM, NHITS, NBEATS
 
 # ------------------------------------------
 # Framing and Features

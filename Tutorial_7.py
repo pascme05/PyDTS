@@ -67,10 +67,10 @@ setupExp['warn'] = 3                                                            
 # ------------------------------------------
 # Training/Testing
 # ------------------------------------------
-setupExp['method'] = 3                                                                                                # 0) 1-fold with data split, 1) k-fold with cross validation, 2) transfer learning with different datasets, 3) id based
+setupExp['method'] = 3                                                                                                  # 0) 1-fold with data split, 1) k-fold with cross validation, 2) transfer learning with different datasets, 3) id based
 setupExp['trainBatch'] = 0                                                                                              # 0) all no batching, 1) fixed batch size (see data batch parameter), 2) id based
 setupExp['kfold'] = 10                                                                                                  # number of folds for method 1)
-setupExp['train'] = 1                                                                                                   # 0) no training (trying to load model), 1) training new model (or retraining)
+setupExp['train'] = 0                                                                                                   # 0) no training (trying to load model), 1) training new model (or retraining)
 setupExp['test'] = 1                                                                                                    # 0) no testing, 1) testing
 
 # ------------------------------------------
@@ -138,7 +138,7 @@ setupDat['balance'] = 0                                                         
 # ------------------------------------------
 setupPar['method'] = 0                                                                                                  # 0) regression, 1) classification
 setupPar['solver'] = 'SF'                                                                                               # solver 1) 'SP': Signal Processing, 2) 'ML': Machine Learning, 3) 'DL': Deep Learning, 4) 'SF': Short Term Time-Series Forecasting, 5) 'CL': Closed Loop
-setupPar['model'] = 'NHITS'                                                                                             # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN, 4) SF: NHITS
+setupPar['model'] = 'LSTM'                                                                                              # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN, 4) SF: LSTM, NHITS, NBEATS
 
 # ------------------------------------------
 # Framing and Features

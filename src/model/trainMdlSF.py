@@ -25,7 +25,7 @@ import os
 import time
 from sys import getsizeof
 from neuralforecast.core import NeuralForecast
-from neuralforecast.auto import NHITS
+from neuralforecast.auto import NHITS, LSTM, NBEATSx
 import copy
 import pandas as pd
 
@@ -101,12 +101,37 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
                      futr_exog_list=setupDat['fut'],
                      hist_exog_list=setupDat['his'],
                      scaler_type='robust',
-                     max_steps=EPOCHS)]
+                     max_steps=EPOCHS,
+                     learning_rate=setupMdl['lr'])]
+
+    # ------------------------------------------
+    # LSTM
+    # ------------------------------------------
+    if setupPar['model'] == "LSTM":
+        mdl = [LSTM(h=horizon,
+                    input_size=window,
+                    futr_exog_list=setupDat['fut'],
+                    hist_exog_list=setupDat['his'],
+                    scaler_type='robust',
+                    max_steps=EPOCHS,
+                    learning_rate=setupMdl['lr'])]
+
+    # ------------------------------------------
+    # NBEATS
+    # ------------------------------------------
+    if setupPar['model'] == "NBEATS":
+        mdl = [NBEATSx(h=horizon,
+                       input_size=window,
+                       futr_exog_list=setupDat['fut'],
+                       hist_exog_list=setupDat['his'],
+                       scaler_type='robust',
+                       max_steps=EPOCHS,
+                       learning_rate=setupMdl['lr'])]
 
     # ==============================================================================
     # Compiling
     # ==============================================================================
-    mdl = NeuralForecast(models=mdl, freq='H')
+    mdl = NeuralForecast(models=mdl, freq=setupMdl['SF_Freq'])
 
     ###################################################################################################################
     # Loading
