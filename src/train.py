@@ -24,6 +24,7 @@ from src.general.createSeq import createSeq
 from src.model.trainMdlDL import trainMdlDL
 from src.model.trainMdlML import trainMdlML
 from src.model.trainMdlSP import trainMdlSP
+from src.model.trainMdlSF import trainMdlSF
 from src.general.adaptDim import adaptDim
 from src.data.summaryData import summaryData
 
@@ -197,7 +198,7 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # Short-Time-Forecasting
     # ------------------------------------------
     elif setupPar['solver'] == 'SF':
-        trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+        trainMdlSF(dataTrain, setupDat, setupPar, setupMdl, setupExp)
 
     # ------------------------------------------
     # Closed Loop Modeling

@@ -104,6 +104,8 @@ setupDat['val'] = 'Tutorial_5'                                                  
 # ------------------------------------------
 setupDat['inp'] = []                                                                                                    # names of the input variables (X) if empty all
 setupDat['out'] = ['Chg']                                                                                               # names of the output variables (y)
+setupDat['his'] = []                                                                                                    # names of the historic exogenous input (his) for short term load-forecasting
+setupDat['fut'] = []                                                                                                    # names of the future exogenous input (fut) for short term load-forecasting
 
 # ------------------------------------------
 # Sampling
@@ -133,13 +135,14 @@ setupDat['balance'] = 0                                                         
 # Solver
 # ------------------------------------------
 setupPar['method'] = 0                                                                                                  # 0) regression, 1) classification
-setupPar['solver'] = 'DL'                                                                                               # solver 1) 'SP': Signal Processing, 2) 'ML': Machine Learning, 3) 'DL': Deep Learning
-setupPar['model'] = 'CNN'                                                                                               # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN
+setupPar['solver'] = 'DL'                                                                                               # solver 1) 'SP': Signal Processing, 2) 'ML': Machine Learning, 3) 'DL': Deep Learning, 4) 'SF': Short Term Time-Series Forecasting, 5) 'CL': Closed Loop
+setupPar['model'] = 'CNN'                                                                                               # possible models 1) SP: State Space (SS), Transfer Function (TF), 2) ML: RF, KNN, SVM, 3) DL: CNN, LSTM, DNN, 4) SF: NHITS
 
 # ------------------------------------------
 # Framing and Features
 # ------------------------------------------
 setupPar['lag'] = 0                                                                                                     # lagging between input (X) and output (y) in samples
+setupPar['ahead'] = 24                                                                                                  # number of samples being predicted ahead for SF
 setupPar['frame'] = 1                                                                                                   # 0) no framing, 1) framing
 setupPar['feat'] = 0                                                                                                    # 0) raw data values, 1) statistical features (frame based), 2) statistical features (input based), 3) input and frame based features
 setupPar['init'] = 0                                                                                                    # 0) no initial values 1) adding initial values from y
