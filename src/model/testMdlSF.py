@@ -2,7 +2,7 @@
 #######################################################################################################################
 # Title:        PyDTS (Python Deep Timeseries Simulation)
 # Topic:        Black-Box Modeling
-# File:         trainMdlSF
+# File:         testMdlSF
 # Date:         21.04.2024
 # Author:       Dr. Pascal A. Schirmer
 # Version:      V.0.1
@@ -20,12 +20,11 @@
 # ==============================================================================
 # External
 # ==============================================================================
-import tensorflow as tf
 import os
+import tensorflow as tf
 import time
 from sys import getsizeof
 from neuralforecast.core import NeuralForecast
-from neuralforecast.auto import NHITS
 import copy
 import pandas as pd
 
@@ -33,11 +32,11 @@ import pandas as pd
 #######################################################################################################################
 # Function
 #######################################################################################################################
-def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
+def testMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     # MSG IN
     ###################################################################################################################
-    print("INFO: Training Model (SF)")
+    print("INFO: Test Model (SF)")
 
     ###################################################################################################################
     # Initialisation
@@ -56,16 +55,13 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Parameters
     # ==============================================================================
-    EPOCHS = setupMdl['epoch']
-    window = setupPar['window']
-    horizon = setupPar['ahead']
     sampling_times = 1 / setupDat['fs']
 
     # ==============================================================================
     # Variables
     # ==============================================================================
-    start_time = '2021-01-01 00:00:00'
     mdl = []
+    dataPred = {'T': {}}
 
     # ==============================================================================
     # Name
@@ -73,49 +69,38 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     mdlName = 'mdl/mdl_' + setupPar['model'] + '_' + setupExp['name']
 
     ###################################################################################################################
+    # Loading
+    ###################################################################################################################
+    try:
+        mdl = NeuralForecast.load(path=mdlName)
+        print("INFO: Model loaded")
+    except:
+        print("ERROR: Model could not be loaded")
+    start_time = mdl.last_dates[0]
+    datetime_index = pd.date_range(start=start_time, periods=(len(data['T']['X'])+2), freq=f'{sampling_times}S')
+    datetime_index = datetime_index[1:-1]
+
+    ###################################################################################################################
     # Pre-Processing
     ###################################################################################################################
     # ==============================================================================
     # Reshape Data
     # ==============================================================================
-    dataTrain = copy.deepcopy(data['T']['X'])
-    dataTrain = pd.DataFrame(data=dataTrain, columns=setupDat['inpLabel'])
-    dataTrain = dataTrain.rename(columns={setupDat['out'][0]: 'y'})
-    datetime_index = pd.date_range(start=start_time, periods=len(dataTrain), freq=f'{sampling_times}S')
-    dataTrain.insert(0, 'ds', datetime_index)
-    dataTrain.insert(0, 'unique_id', 1.0)
-
-    # ==============================================================================
-    # Configuration
-    # ==============================================================================
-
-    # ==============================================================================
-    # Create Model
-    # ==============================================================================
-    # ------------------------------------------
-    # NHITS
-    # ------------------------------------------
-    if setupPar['model'] == "NHITS":
-        mdl = [NHITS(h=horizon,
-                     input_size=window,
-                     futr_exog_list=setupDat['fut'],
-                     hist_exog_list=setupDat['his'],
-                     scaler_type='robust',
-                     max_steps=EPOCHS)]
-
-    # ==============================================================================
-    # Compiling
-    # ==============================================================================
-    mdl = NeuralForecast(models=mdl, freq='H')
+    dataTest = copy.deepcopy(data['T']['X'])
+    dataTest = pd.DataFrame(data=dataTest, columns=setupDat['inpLabel'])
+    dataTest.drop(setupDat['out'], axis=1, inplace=True)
+    dataTest.drop(setupDat['his'], axis=1, inplace=True)
+    dataTest.insert(0, 'ds', datetime_index)
+    dataTest.insert(0, 'unique_id', 1.0)
 
     ###################################################################################################################
     # Loading
     ###################################################################################################################
     try:
         mdl = NeuralForecast.load(path=mdlName)
-        print("INFO: Model will be retrained")
+        print("INFO: Model loaded")
     except:
-        print("INFO: Model will be created")
+        print("ERROR: Model could not be loaded")
 
     ###################################################################################################################
     # Calculation
@@ -126,27 +111,25 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     start = time.time()
 
     # ==============================================================================
-    # Train
+    # Test
     # ==============================================================================
-    mdl.fit(df=dataTrain)
+    dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
+    dataPred['T']['X'] = data['T']['X']
 
     # ==============================================================================
     # End timer
     # ==============================================================================
     ende = time.time()
-    trainTime = (ende - start)
+    testTime = (ende - start)
 
     ###################################################################################################################
     # Post-Processing
     ###################################################################################################################
-    mdl.save(path=mdlName,
-             model_index=None,
-             overwrite=True,
-             save_dataset=True)
+    print("INFO: Total inference time (ms): %.2f" % (testTime * 1000))
+    print("INFO: Inference time per sample (us): %.2f" % (testTime / data['T']['X'].shape[0] * 1000 * 1000))
+    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
 
     ###################################################################################################################
-    # Output
+    # References
     ###################################################################################################################
-    print("INFO: Total training time (sec): %.2f" % trainTime)
-    print("INFO: Training time per sample (ms): %.2f" % (trainTime / data['T']['X'].shape[0] * 1000))
-    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
+    return dataPred

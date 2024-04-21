@@ -22,7 +22,8 @@ models = [NHITS(h = horizon,
                 futr_exog_list = ['gen_forecast', 'week_day'], # <- Future exogenous variables
                 hist_exog_list = ['system_load'], # <- Historical exogenous variables
                 stat_exog_list = ['market_0', 'market_1'], # <- Static exogenous variables
-                scaler_type = 'robust')
+                scaler_type = 'robust',
+                max_steps=100)
                 ]
 
 nf = NeuralForecast(models=models, freq='H')

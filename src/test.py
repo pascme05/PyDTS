@@ -24,6 +24,7 @@ from src.general.createSeq import createSeq
 from src.model.testMdlDL import testMdlDL
 from src.model.testMdlML import testMdlML
 from src.model.testMdlSP import testMdlSP
+from src.model.testMdlSF import testMdlSF
 from src.general.performance import performance
 from src.general.plotting import plotting
 from src.general.printResults import printResults
@@ -196,7 +197,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Short-Time-Forecasting
     # ------------------------------------------
     elif setupPar['solver'] == 'SF':
-        dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+        dataPred = testMdlSF(dataTest, setupDat, setupPar, setupMdl, setupExp)
 
     # ------------------------------------------
     # Closed Loop Modeling
