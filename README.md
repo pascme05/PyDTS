@@ -100,7 +100,13 @@ options for short-term time-series forecasting (SF) and closed loop (CL) modelin
 output relations (I/O) of the different models are illustrated in the figure below:
 
 
+| SP/ML/DL                         | Short-Term Forecasting (SF)      | Closed Loop (CL)                 |
+|----------------------------------|----------------------------------|----------------------------------|
+|  ![Figure_7.png](docu%2Ffigure%2FFigure_7.png)| ![Figure_8.png](docu%2Ffigure%2FFigure_8.png)| ![Figure_9.png](docu%2Ffigure%2FFigure_9.png)|
 
+where $X$ is an input time-series with $T$ samples and $F$ features, and $y$ is the output time-series with $T$ samples
+and $L$ channels. Further, considering forecasting $W$ is the number of previous samples, while $H$ denotes the prediction
+horizon. $X_{H}$ denotes historic time-series inputs, while $X_{F}$ denotes future value inputs.
 
 # Exemplary Results
 In the following chapter, a set of reference results is provided using the “default.txt” setup files provided in \setup. 
