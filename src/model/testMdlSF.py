@@ -104,7 +104,11 @@ def testMdlSF(data, setupDat, setupPar, _, setupExp):
     # ==============================================================================
     # Test
     # ==============================================================================
-    dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
+    try:
+        dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
+    except:
+        dataPred['T']['y'] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
+        print("WARN: Using future values failed, predicting without additional inputs")
     dataPred['T']['X'] = data['T']['X']
 
     # ==============================================================================
