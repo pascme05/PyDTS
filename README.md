@@ -62,7 +62,17 @@ generalized architecture is illustrated below:
 
 As can be seen, the general architecture consists of five steps namely pre-processing (e.g. resampling or filtering), window
 framing, feature extraction, model prediction, and post-processing (e.g. limiting the output). The architecture is used
-for all applications which are described below
+for all applications which are described below. Additionally, the different modules  offered by PyDTS and the flow diagram for the
+different operations are illustrated below:
+
+[PIC_240120_Architecture_PyDTs.pdf](docu%2Ffigure%2FPIC_240120_Architecture_PyDTs.pdf)
+Overview of implemented modules and functionalities in the PyDTS toolkit. Inputs and
+preprocessing are indicated in red, features and data sequencing in yellow, modelling in green,
+postprocessing in blue, and visual elements and outputs in purple.
+
+[PIC_240120_Architecture_Flowchart.pdf](docu%2Ffigure%2FPIC_240120_Architecture_Flowchart.pdf)
+Internal data pipeline of PyDTS including training and testing modules and external data,
+model, and setup databases.
 
 ## Applications
 The toolkit aims to cover different applications as they usually appear in industrial settings for time-series modeling.
@@ -85,7 +95,11 @@ a 2D grid search available in 'optiGrid.py'.
 ## Models
 The toolkit as three different types of models implemented namely models based on Signal Processing (SP), e.g. State-Space (SS)
 models or Transfer Function (TF) models, models based on Machine Learning (ML), e.g. Support Vector Machine (SVM) or Random
-Forest (RF), models based on Deep Learning (DL), e.g. Long Short Term Memory (LSTM) or Convolutional Neural Network (CNN).
+Forest (RF), models based on Deep Learning (DL), e.g. Long Short Term Memory (LSTM) or Convolutional Neural Network (CNN). Furthermore,
+options for short-term time-series forecasting (SF) and closed loop (CL) modeling approaches are available. The input and
+output relations (I/O) of the different models are illustrated in the figure below:
+
+
 
 
 # Exemplary Results
@@ -205,6 +219,7 @@ The software framework is provided under the Attribution-NonCommercial-NoDerivat
 
 # Version History
 1) v.0.1: (26.10.2023) Initial version of PyDTS
+2) v.0.2: (24.04.2024) Adding forecasting methodology
    
 
 # References
