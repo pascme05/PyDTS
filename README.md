@@ -65,12 +65,12 @@ framing, feature extraction, model prediction, and post-processing (e.g. limitin
 for all applications which are described below. Additionally, the different modules  offered by PyDTS and the flow diagram for the
 different operations are illustrated below:
 
-![Figure5.png](docu%2Ffigure%2FFigure5.png)
+![Figure_5.png](docu%2Ffigure%2FFigure_5.png)
 Overview of implemented modules and functionalities in the PyDTS toolkit. Inputs and
 preprocessing are indicated in red, features and data sequencing in yellow, modelling in green,
 postprocessing in blue, and visual elements and outputs in purple.
 
-![Figure6.png](docu%2Ffigure%2FFigure6.png)
+![Figure_6.png](docu%2Ffigure%2FFigure_6.png)
 Internal data pipeline of PyDTS including training and testing modules and external data,
 model, and setup databases.
 
