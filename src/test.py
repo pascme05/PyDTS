@@ -25,6 +25,7 @@ from src.model.testMdlDL import testMdlDL
 from src.model.testMdlML import testMdlML
 from src.model.testMdlSP import testMdlSP
 from src.model.testMdlSF import testMdlSF
+from src.model.testMdlCL import testMdlCL
 from src.general.performance import performance
 from src.general.plotting import plotting
 from src.general.printResults import printResults
@@ -203,7 +204,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Closed Loop Modeling
     # ------------------------------------------
     elif setupPar['solver'] == 'CL':
-        dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+        dataPred = testMdlCL(dataTest, setupDat, setupPar, setupMdl, setupExp)
 
     # ==============================================================================
     # Msg

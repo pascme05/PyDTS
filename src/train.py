@@ -25,6 +25,7 @@ from src.model.trainMdlDL import trainMdlDL
 from src.model.trainMdlML import trainMdlML
 from src.model.trainMdlSP import trainMdlSP
 from src.model.trainMdlSF import trainMdlSF
+from src.model.trainMdlCL import trainMdlCL
 from src.general.adaptDim import adaptDim
 from src.data.summaryData import summaryData
 
@@ -204,7 +205,7 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # Closed Loop Modeling
     # ------------------------------------------
     elif setupPar['solver'] == 'CL':
-        trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+        trainMdlCL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
 
     ###################################################################################################################
     # MSG Out

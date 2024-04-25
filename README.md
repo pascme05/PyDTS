@@ -40,6 +40,8 @@ that all datasets are measured and no synthetic data has been used.
 4) Tutorial 4 (Anomaly detection) based on Ford dataset [4]: https://www.timeseriesclassification.com/description.php?Dataset=FordA
 5) Tutorial 5 (Degradation modeling) based on Battery aging [5] (CC BY 4.0): https://kilthub.cmu.edu/articles/dataset/eVTOL_Battery_Dataset/14226830/2
 6) Tutorial 6 (Cross Domain modeling) based on vehicle data [6] (CC-BY 4.0): https://ieee-dataport.org/open-access/battery-and-heating-data-real-driving-cycles
+7) Tutorial 7 (Short Term forecasting) based on energy generation data (example data)
+8) Tutorial 8 (Closed Loop modeling) based on Electric Motor Temperature [3] (CC BY-SA 4.0): https://www.kaggle.com/datasets/wkirgsn/electric-motor-temperature
 
 If the user wants to utilize their own datasets, data can be provided in '.csv', '.xlsx', and '.mat' formats at the moment.
 Data templates can be found under \data.
@@ -89,7 +91,7 @@ The toolkit offers three different operating modes. The operating modes can be c
 in the start.py file. The following three options are available. First, classical training and testing where a model is
 trained using a training and validation dataset, and tested on a testing dataset respectively. Second, hyperparameters
 optimization where free model parameters are optimally tuned using scikit GridSearchCV for machine learning models and
-keras hyperband tuner for deep learning models utilizing tensorboard. Third, general parameters can be optimized using
+keras hyper band tuner for deep learning models utilizing tensorboard. Third, general parameters can be optimized using
 a 2D grid search available in 'optiGrid.py'.
 
 ## Models

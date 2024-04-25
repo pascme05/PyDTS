@@ -63,8 +63,9 @@ def preprocess(data, setupDat, setupPar):
     # ==============================================================================
     # Introducing Time Lag
     # ==============================================================================
-    for names in data['y']:
-        data['y'][names] = np.roll(data['y'][names], setupPar['lag'])
+    if setupPar['solver'] != 'CL':
+        for names in data['y']:
+            data['y'][names] = np.roll(data['y'][names], setupPar['lag'])
 
     # ==============================================================================
     # Filtering
