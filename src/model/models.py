@@ -46,11 +46,12 @@ def tfMdlDNN(X_train, outputdim, activation):
 def tfMdlCNN(X_train, outputdim, activation):
     mdl = tf.keras.models.Sequential([
 
-        tf.keras.layers.Conv1D(filters=30, kernel_size=10, activation='relu', padding="same", strides=1, input_shape=X_train.shape[1:]),
-        tf.keras.layers.Conv1D(filters=30, kernel_size=8,  activation='relu', padding="same", strides=1),
-        tf.keras.layers.Conv1D(filters=40, kernel_size=6,  activation='relu', padding="same", strides=1),
-        tf.keras.layers.Conv1D(filters=50, kernel_size=5,  activation='relu', padding="same", strides=1),
-        tf.keras.layers.Conv1D(filters=50, kernel_size=5,  activation='relu', padding="same", strides=1),
+        tf.keras.layers.Conv1D(filters=30, kernel_size=10, activation='relu', padding="same", strides=1,
+                               input_shape=X_train.shape[1:]),
+        tf.keras.layers.Conv1D(filters=30, kernel_size=8, activation='relu', padding="same", strides=1),
+        tf.keras.layers.Conv1D(filters=40, kernel_size=6, activation='relu', padding="same", strides=1),
+        tf.keras.layers.Conv1D(filters=50, kernel_size=5, activation='relu', padding="same", strides=1),
+        tf.keras.layers.Conv1D(filters=50, kernel_size=5, activation='relu', padding="same", strides=1),
 
         tf.keras.layers.MaxPooling1D(pool_size=5, strides=5, padding='same'),
         tf.keras.layers.Flatten(),
@@ -69,8 +70,9 @@ def tfMdlCNN(X_train, outputdim, activation):
 def tfMdlCNNopti(X_train, outputdim, activation):
     mdl = tf.keras.models.Sequential([
 
-        tf.keras.layers.Conv1D(filters=48, kernel_size=6, activation='relu', padding="same", strides=1, input_shape=X_train.shape[1:]),
-        tf.keras.layers.Conv1D(filters=56, kernel_size=2,  activation='relu', padding="same", strides=1),
+        tf.keras.layers.Conv1D(filters=48, kernel_size=6, activation='relu', padding="same", strides=1,
+                               input_shape=X_train.shape[1:]),
+        tf.keras.layers.Conv1D(filters=56, kernel_size=2, activation='relu', padding="same", strides=1),
 
         tf.keras.layers.MaxPooling1D(pool_size=4, strides=8, padding='same'),
         tf.keras.layers.Flatten(),
@@ -112,7 +114,7 @@ def tfMdlLSTM(X_train, outputdim, activation):
 # ------------------------------------------
 # DNN
 # ------------------------------------------
-def tfMdloptiR2(hp):
+def tfMdloptiR3(hp):
     # Input
     mdl = keras.Sequential()
     mdl.add(tf.keras.layers.Flatten())
@@ -125,6 +127,40 @@ def tfMdloptiR2(hp):
 
     # Learner
     hp_learning_rate = hp.Choice('learning_rate', values=[1e-1, 5e-2, 1e-2])
+    mdl.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate), loss='mae', metrics='mse')
+
+    return mdl
+
+
+# ------------------------------------------
+# LSTM
+# ------------------------------------------
+def tfMdloptiR2(hp):
+    # ------------------------------------------
+    # Input
+    # ------------------------------------------
+    mdl = keras.Sequential()
+
+    # ------------------------------------------
+    # Mdl
+    # ------------------------------------------
+    # LSTM Layers
+    for i in range(hp.Int("lstm_layers", 0, 3, step=1)):
+        mdl.add(tf.keras.layers.LSTM(hp.Int("nodes_" + str(i), 16, 128, step=16), return_sequences=True))
+    mdl.add(tf.keras.layers.LSTM(hp.Int("nodes2", 16, 128, step=16)))
+
+    # DNN Layers
+    mdl.add(tf.keras.layers.Flatten())
+    for i in range(hp.Int("dnn_layers", 1, 4, step=1)):
+        mdl.add(tf.keras.layers.Dense(hp.Int("units_" + str(i), 32, 256, step=32), activation="relu"))
+
+    # ------------------------------------------
+    # Output
+    # ------------------------------------------
+    mdl.add(tf.keras.layers.Dense(1, activation='linear'))
+
+    # Compile
+    hp_learning_rate = hp.Choice('learning_rate', values=[1e-2, 1e-3, 1e-4])
     mdl.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate), loss='mae', metrics='mse')
 
     return mdl
@@ -193,6 +229,7 @@ def tfMdloptiC(hp):
 
     # Learner
     hp_learning_rate = hp.Choice('learning_rate', values=[1e-1, 5e-2, 1e-2])
-    mdl.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate), loss='BinaryCrossentropy', metrics='accuracy')
+    mdl.compile(optimizer=keras.optimizers.Adam(learning_rate=hp_learning_rate), loss='BinaryCrossentropy',
+                metrics='accuracy')
 
     return mdl
