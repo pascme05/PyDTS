@@ -28,7 +28,8 @@ Toolkit was implemented using the following dependencies:
 - Scipy
 
 Additionally, Python 3.11 with tensorflow 2.13 was tested. The requirements.txt file was updated for version 3.11, while
-the old requirements have been store using req38.txt
+the old requirements have been store using req38.txt. Furthermore, when changing back to Python 3.8 the optimizer must
+be changed from "tf.keras.optimizers.legacy.Adam" to "tf.keras.optimizers.Adam" (similarly for all other optimizers).
 
 # Datasets
 The toolkit utilizes the following publicly available datasets, which have been pre-processed and reshaped for the users'
