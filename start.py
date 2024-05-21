@@ -52,7 +52,7 @@ setupPath = initPath('PyDTS')
 # ------------------------------------------
 # Names
 # ------------------------------------------
-setupExp['name'] = 'Test0'                                                                                               # Name of the simulation
+setupExp['name'] = 'Test'                                                                                               # Name of the simulation
 setupExp['author'] = 'Pascal Schirmer'                                                                                  # Name of the author
 
 # ------------------------------------------
