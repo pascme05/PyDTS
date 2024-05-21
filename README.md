@@ -27,6 +27,8 @@ Toolkit was implemented using the following dependencies:
 - Pandas
 - Scipy
 
+Additionally, Python 3.11 with tensorflow 2.13 was tested. The requirements.txt file was updated for version 3.11, while
+the old requirements have been store using req38.txt
 
 # Datasets
 The toolkit utilizes the following publicly available datasets, which have been pre-processed and reshaped for the users'
@@ -228,6 +230,7 @@ The software framework is provided under the Attribution-NonCommercial-NoDerivat
 # Version History
 1) v.0.1: (26.10.2023) Initial version of PyDTS
 2) v.0.2: (24.04.2024) Adding forecasting methodology
+3) v.0.3: (21.05.2024) Updating Python 3.11
    
 
 # References
