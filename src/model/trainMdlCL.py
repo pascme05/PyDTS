@@ -19,7 +19,6 @@ import copy
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
 from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM
-from src.general.framing import framing
 
 # ==============================================================================
 # External
@@ -82,7 +81,8 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Callbacks
     # ==============================================================================
-    callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=setupMdl['patience'], restore_best_weights=True)]
+    callbacks = [
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=setupMdl['patience'], restore_best_weights=True)]
 
     ###################################################################################################################
     # Pre-Processing
@@ -91,7 +91,8 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # Balance Data
     # ==============================================================================
     if setupDat['balance'] == 1:
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(data['T']['y']), y=data['T']['y'])
+        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(data['T']['y']),
+                                                          y=data['T']['y'])
     elif setupDat['balance'] > 1:
         temp = np.digitize(data['T']['y'], bins=[setupDat['balance']])
         class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(temp), y=temp)
@@ -107,8 +108,10 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Combine Data
     # ==============================================================================
-    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones((dataShift['T'].shape[0], data['T']['X'].shape[1]))
-    dataShift['V'] = dataShift['V'].reshape(dataShift['V'].shape[0], 1) * np.ones((dataShift['V'].shape[0], data['V']['X'].shape[1]))
+    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones(
+        (dataShift['T'].shape[0], data['T']['X'].shape[1]))
+    dataShift['V'] = dataShift['V'].reshape(dataShift['V'].shape[0], 1) * np.ones(
+        (dataShift['V'].shape[0], data['V']['X'].shape[1]))
     data['T']['X'] = np.concatenate((data['T']['X'], dataShift['T'][:, :, np.newaxis]), axis=2)
     data['V']['X'] = np.concatenate((data['V']['X'], dataShift['V'][:, :, np.newaxis]), axis=2)
 
@@ -187,17 +190,17 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     # RMSprop
     if setupMdl['opt'] == 'RMSprop':
-        opt = tf.keras.optimizers.RMSprop(learning_rate=setupMdl['lr'], rho=setupMdl['rho'],
-                                          momentum=setupMdl['mom'], epsilon=setupMdl['eps'])
+        opt = tf.keras.optimizers.legacy.RMSprop(learning_rate=setupMdl['lr'], rho=setupMdl['rho'],
+                                                 momentum=setupMdl['mom'], epsilon=setupMdl['eps'])
 
     # SGD
     elif setupMdl['opt'] == 'SDG':
-        opt = tf.keras.optimizers.SGD(learning_rate=setupMdl['lr'], momentum=setupMdl['mom'])
+        opt = tf.keras.optimizers.legacy.SGD(learning_rate=setupMdl['lr'], momentum=setupMdl['mom'])
 
     # Adam
     else:
-        opt = tf.keras.optimizers.Adam(learning_rate=setupMdl['lr'], beta_1=setupMdl['beta1'],
-                                       beta_2=setupMdl['beta2'], epsilon=setupMdl['eps'])
+        opt = tf.keras.optimizers.legacy.Adam(learning_rate=setupMdl['lr'], beta_1=setupMdl['beta1'],
+                                              beta_2=setupMdl['beta2'], epsilon=setupMdl['eps'])
 
     # ------------------------------------------
     # Compile
@@ -224,7 +227,7 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # Learning rate
     # ------------------------------------------
     callbacks.append(tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', verbose=1, factor=0.5,
-                                                          patience=int(setupMdl['patience']/2), min_lr=1e-9))
+                                                          patience=int(setupMdl['patience'] / 2), min_lr=1e-9))
 
     # ==============================================================================
     # Start timer

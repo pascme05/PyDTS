@@ -60,8 +60,7 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     mdl = []
     dataTest = copy.deepcopy(data)
     dataPred = {'T': {'X': {}, 'y': np.zeros(np.size(data['T']['y']))}}
-    dataShift = {}
-    dataShift['T'] = copy.deepcopy(data['T']['y'])
+    dataShift = {'T': copy.deepcopy(data['T']['y'])}
 
     # ==============================================================================
     # Name
@@ -79,13 +78,15 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Combine Data
     # ==============================================================================
-    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones((dataShift['T'].shape[0], data['T']['X'].shape[1]))
+    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones(
+        (dataShift['T'].shape[0], data['T']['X'].shape[1]))
     dataTest['T']['X'] = np.concatenate((dataTest['T']['X'], dataShift['T'][:, :, np.newaxis]), axis=2)
 
     # ==============================================================================
     # Reshape Data
     # ==============================================================================
-    [dataTest['T']['X'], dataTest['T']['y']] = reshapeMdlData(dataTest['T']['X'], dataTest['T']['y'], setupDat, setupPar, 0)
+    [dataTest['T']['X'], dataTest['T']['y']] = reshapeMdlData(dataTest['T']['X'], dataTest['T']['y'], setupDat,
+                                                              setupPar, 0)
 
     # ==============================================================================
     # Model Input and Output
@@ -148,17 +149,17 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     # RMSprop
     if setupMdl['opt'] == 'RMSprop':
-        opt = tf.keras.optimizers.RMSprop(learning_rate=setupMdl['lr'], rho=setupMdl['rho'],
-                                          momentum=setupMdl['mom'], epsilon=setupMdl['eps'])
+        opt = tf.keras.optimizers.legacy.RMSprop(learning_rate=setupMdl['lr'], rho=setupMdl['rho'],
+                                                 momentum=setupMdl['mom'], epsilon=setupMdl['eps'])
 
     # SGD
     elif setupMdl['opt'] == 'SDG':
-        opt = tf.keras.optimizers.SGD(learning_rate=setupMdl['lr'], momentum=setupMdl['mom'])
+        opt = tf.keras.optimizers.legacy.SGD(learning_rate=setupMdl['lr'], momentum=setupMdl['mom'])
 
     # Adam
     else:
-        opt = tf.keras.optimizers.Adam(learning_rate=setupMdl['lr'], beta_1=setupMdl['beta1'],
-                                       beta_2=setupMdl['beta2'], epsilon=setupMdl['eps'])
+        opt = tf.keras.optimizers.legacy.Adam(learning_rate=setupMdl['lr'], beta_1=setupMdl['beta1'],
+                                              beta_2=setupMdl['beta2'], epsilon=setupMdl['eps'])
 
     # ------------------------------------------
     # Compile
@@ -179,7 +180,7 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     for i in range(0, dataTest['T']['X'].shape[0]):
         if i >= abs(setupPar['lag']):
             tempX = dataTest['T']['X'][i, :, :]
-            tempX[:, -1] = dataPred['T']['y'][i-abs(setupPar['lag'])] * np.ones(dataTest['T']['X'].shape[1])
+            tempX[:, -1] = dataPred['T']['y'][i - abs(setupPar['lag'])] * np.ones(dataTest['T']['X'].shape[1])
         else:
             tempX = dataTest['T']['X'][i, :, :]
         dataPred['T']['y'][i] = mdl.predict(tempX.reshape(1, dataTest['T']['X'].shape[1], dataTest['T']['X'].shape[2]))
