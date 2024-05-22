@@ -18,7 +18,7 @@ import copy
 # Internal
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM
+from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE
 
 # ==============================================================================
 # External
@@ -69,9 +69,7 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # Variables
     # ==============================================================================
     mdl = []
-    dataShift = {}
-    dataShift['T'] = copy.deepcopy(data['T']['y'])
-    dataShift['V'] = copy.deepcopy(data['V']['y'])
+    dataShift = {'T': copy.deepcopy(data['T']['y']), 'V': copy.deepcopy(data['V']['y'])}
 
     # ==============================================================================
     # Name
@@ -108,10 +106,8 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Combine Data
     # ==============================================================================
-    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones(
-        (dataShift['T'].shape[0], data['T']['X'].shape[1]))
-    dataShift['V'] = dataShift['V'].reshape(dataShift['V'].shape[0], 1) * np.ones(
-        (dataShift['V'].shape[0], data['V']['X'].shape[1]))
+    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones((dataShift['T'].shape[0], data['T']['X'].shape[1]))
+    dataShift['V'] = dataShift['V'].reshape(dataShift['V'].shape[0], 1) * np.ones((dataShift['V'].shape[0], data['V']['X'].shape[1]))
     data['T']['X'] = np.concatenate((data['T']['X'], dataShift['T'][:, :, np.newaxis]), axis=2)
     data['V']['X'] = np.concatenate((data['V']['X'], dataShift['V'][:, :, np.newaxis]), axis=2)
 
@@ -160,6 +156,18 @@ def trainMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     if setupPar['model'] == "LSTM":
         mdl = tfMdlLSTM(data['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # Transformer
+    # ------------------------------------------
+    if setupPar['model'] == "TRAN":
+        mdl = tfMdlTran(data['T']['X'], out, activation)
+    # ------------------------------------------
+    # DAE
+    # ------------------------------------------
+    if setupPar['model'] == "DAE":
+        mdl = tfMdlDAE(data['T']['X'], out, activation)
+
     mdl.summary()
 
     ###################################################################################################################

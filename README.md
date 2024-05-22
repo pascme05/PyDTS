@@ -231,7 +231,7 @@ The software framework is provided under the Attribution-NonCommercial-NoDerivat
 # Version History
 1) v.0.1: (26.10.2023) Initial version of PyDTS
 2) v.0.2: (24.04.2024) Adding forecasting methodology
-3) v.0.3: (21.05.2024) Updating Python 3.11
+3) v.0.3: (21.05.2024) Updating Python 3.11 and adding new DL models
    
 
 # References

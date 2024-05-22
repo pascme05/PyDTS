@@ -15,6 +15,7 @@
 # Import external libs
 #######################################################################################################################
 import tensorflow as tf
+import numpy as np
 from tensorflow import keras
 
 
@@ -101,6 +102,128 @@ def tfMdlLSTM(X_train, outputdim, activation):
     mdl.add(tf.keras.layers.Dense(32, activation='relu'))
     mdl.add(tf.keras.layers.Dense(outputdim, activation=activation))
     mdl.set_weights(mdl.get_weights())
+
+    return mdl
+
+
+#######################################################################################################################
+# Transformer Models
+#######################################################################################################################
+# ==============================================================================
+# TRAN-1
+# ==============================================================================
+class TransformerBlock(tf.keras.layers.Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+        super(TransformerBlock, self).__init__()
+        self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+        self.ffn = tf.keras.Sequential(
+            [tf.keras.layers.Dense(ff_dim, activation="relu"), tf.keras.layers.Dense(embed_dim)]
+        )
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = tf.keras.layers.Dropout(rate)
+        self.dropout2 = tf.keras.layers.Dropout(rate)
+
+    def call(self, inputs, training):
+        attn_output = self.att(inputs, inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.layernorm2(out1 + ffn_output)
+
+
+def tfMdlTran(X_train, output, activation):
+    inputs = tf.keras.layers.Input(shape=X_train.shape[1:])
+    x = tf.keras.layers.Dense(32)(inputs)
+    transformer_block = TransformerBlock(32, 2, 32)
+    x = transformer_block(x)
+    x = tf.keras.layers.GlobalAveragePooling1D()(x)
+    x = tf.keras.layers.Dropout(0.1)(x)
+    outputs = tf.keras.layers.Dense(output, activation=activation)(x)  # Adjust output layer for your specific task
+    mdl = tf.keras.models.Model(inputs=inputs, outputs=outputs)
+    mdl.set_weights(mdl.get_weights())
+
+    return mdl
+
+
+#######################################################################################################################
+# Denoising Models
+#######################################################################################################################
+# ==============================================================================
+# DAE-1
+# ==============================================================================
+def tfMdlDAE(X_train, output, activation):
+    # Encoder
+    inputs = tf.keras.layers.Input(shape=X_train.shape[1:])
+    x = tf.keras.layers.Conv1D(32, kernel_size=3, padding='same', activation='relu')(inputs)
+    x = tf.keras.layers.Conv1D(32, kernel_size=3, padding='same', activation='relu')(x)
+    x = tf.keras.layers.Flatten()(x)
+    encoded = tf.keras.layers.Dense(32, activation='relu')(x)
+
+    # Decoder
+    x = tf.keras.layers.Dense(32 * output, activation='relu')(encoded)  # Map to a larger dense layer
+    x = tf.keras.layers.Reshape((output, 32))(x)
+    x = tf.keras.layers.Conv1D(32, kernel_size=3, padding='same', activation='relu')(x)
+    x = tf.keras.layers.Flatten()(x)
+    decoded = tf.keras.layers.Dense(output, activation=activation)(x)  # Produce a 1D output
+
+    # Autoencoder
+    mdl = tf.keras.models.Model(inputs, decoded)
+    mdl.set_weights(mdl.get_weights())
+
+    return mdl
+
+
+#######################################################################################################################
+# Informer Models
+#######################################################################################################################
+# ==============================================================================
+# INF-1
+# ==============================================================================
+class ProbSparseSelfAttention(tf.keras.layers.Layer):
+    def __init__(self, embed_dim, num_heads):
+        super(ProbSparseSelfAttention, self).__init__()
+        self.multi_head_attention = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
+
+    def call(self, inputs, training):
+        attn_output = self.multi_head_attention(inputs, inputs)
+        return attn_output
+
+
+class InformerBlock(tf.keras.layers.Layer):
+    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
+        super(InformerBlock, self).__init__()
+        self.att = ProbSparseSelfAttention(embed_dim, num_heads)
+        self.ffn = tf.keras.Sequential(
+            [tf.keras.layers.Dense(ff_dim, activation="relu"), tf.keras.layers.Dense(embed_dim)]
+        )
+        self.layernorm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.layernorm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = tf.keras.layers.Dropout(rate)
+        self.dropout2 = tf.keras.layers.Dropout(rate)
+
+    def call(self, inputs, training):
+        attn_output = self.att(inputs, training)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.layernorm1(inputs + attn_output)
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.layernorm2(out1 + ffn_output)
+
+
+def tfMdlINF(X_train, output, activation):
+    inputs = tf.keras.layers.Input(shape=X_train.shape[1:])
+
+    # Project input features to the embedding dimension
+    x = tf.keras.layers.Dense(32)(inputs)
+
+    informer_block = InformerBlock(32, 2, 32)
+    x = informer_block(x)
+    x = tf.keras.layers.GlobalAveragePooling1D()(x)
+    x = tf.keras.layers.Dropout(0.1)(x)
+    outputs = tf.keras.layers.Dense(output, activation=activation)(x)  # Adjust output layer for your specific task
+    mdl = tf.keras.models.Model(inputs=inputs, outputs=outputs)
 
     return mdl
 

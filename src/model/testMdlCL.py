@@ -18,7 +18,7 @@
 # Internal
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM
+from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE
 
 # ==============================================================================
 # External
@@ -78,8 +78,7 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Combine Data
     # ==============================================================================
-    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones(
-        (dataShift['T'].shape[0], data['T']['X'].shape[1]))
+    dataShift['T'] = dataShift['T'].reshape(dataShift['T'].shape[0], 1) * np.ones((dataShift['T'].shape[0], data['T']['X'].shape[1]))
     dataTest['T']['X'] = np.concatenate((dataTest['T']['X'], dataShift['T'][:, :, np.newaxis]), axis=2)
 
     # ==============================================================================
@@ -127,6 +126,19 @@ def testMdlCL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     if setupPar['model'] == "LSTM":
         mdl = tfMdlLSTM(dataTest['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # Transformer
+    # ------------------------------------------
+    if setupPar['model'] == "TRAN":
+        mdl = tfMdlTran(data['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # DAE
+    # ------------------------------------------
+    if setupPar['model'] == "DAE":
+        mdl = tfMdlDAE(data['T']['X'], out, activation)
+
     mdl.summary()
 
     ###################################################################################################################

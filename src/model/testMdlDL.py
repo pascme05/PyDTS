@@ -17,7 +17,7 @@
 # Internal
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM
+from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE, tfMdlINF
 
 # ==============================================================================
 # External
@@ -109,6 +109,25 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     if setupPar['model'] == "LSTM":
         mdl = tfMdlLSTM(data['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # Transformer
+    # ------------------------------------------
+    if setupPar['model'] == "TRAN":
+        mdl = tfMdlTran(data['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # DAE
+    # ------------------------------------------
+    if setupPar['model'] == "DAE":
+        mdl = tfMdlDAE(data['T']['X'], out, activation)
+
+    # ------------------------------------------
+    # INF
+    # ------------------------------------------
+    if setupPar['model'] == "INF":
+        mdl = tfMdlINF(data['T']['X'], out, activation)
+
     mdl.summary()
 
     ###################################################################################################################
