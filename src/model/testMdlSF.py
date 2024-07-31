@@ -27,6 +27,7 @@ from sys import getsizeof
 from neuralforecast.core import NeuralForecast
 import copy
 import pandas as pd
+import numpy as np
 
 
 #######################################################################################################################
@@ -93,6 +94,12 @@ def testMdlSF(data, setupDat, setupPar, _, setupExp):
     dataTest.insert(0, 'ds', datetime_index)
     dataTest.insert(0, 'unique_id', 1.0)
 
+    # ==============================================================================
+    # Init Output
+    # ==============================================================================
+    dataPred['T']['y'] = np.zeros((dataTest.shape[0], 1))
+    K = dataPred['T']['y'].shape[0] // setupPar['ahead']
+
     ###################################################################################################################
     # Calculation
     ###################################################################################################################
@@ -105,9 +112,30 @@ def testMdlSF(data, setupDat, setupPar, _, setupExp):
     # Test
     # ==============================================================================
     try:
-        dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
+        if dataTest.shape[0] > setupPar['ahead']:
+            for i in range(0, K):
+                start = i * setupPar['ahead']
+                ende = (i + 1) * setupPar['ahead']
+                dataTest = copy.deepcopy(data['T']['X'][start:ende])
+                dataTest = pd.DataFrame(data=dataTest, columns=setupDat['inpLabel'])
+                dataTest.drop(setupDat['out'], axis=1, inplace=True)
+                dataTest.drop(setupDat['his'], axis=1, inplace=True)
+                datetime_index = pd.date_range(start=start_time, periods=(setupPar['ahead'] + 2),
+                                               freq=f'{sampling_times}S')
+                datetime_index = datetime_index[1:-1]
+                dataTest.insert(0, 'ds', datetime_index)
+                dataTest.insert(0, 'unique_id', 1.0)
+                dataPred['T']['y'][start:ende] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
+        else:
+            dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
     except:
-        dataPred['T']['y'] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
+        if dataTest.shape[0] > setupPar['ahead']:
+            for i in range(0, K):
+                start = i * setupPar['ahead']
+                ende = (i + 1) * setupPar['ahead']
+                dataPred['T']['y'][start:ende] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
+        else:
+            dataPred['T']['y'] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
         print("WARN: Using future values failed, predicting without additional inputs")
     dataPred['T']['X'] = data['T']['X']
 

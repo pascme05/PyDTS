@@ -124,21 +124,25 @@ def plotting(dataRaw, data, dataPred, resultsAvg, feaScore, feaError, setupDat):
     # ------------------------------------------
     # General
     # ------------------------------------------
-    plt.figure()
+    fig, axs = plt.subplots(row_max, 1, sharex=True)
     txt = "Time-domain plots of input features"
-    plt.suptitle(txt, size=18)
+    fig.suptitle(txt, size=18)
     plt.subplots_adjust(hspace=0.35, wspace=0.35, left=0.075, right=0.925, top=0.90, bottom=0.075)
+    x_min, x_max = traw.min(), traw.max()
 
     # ------------------------------------------
     # Plotting
     # ------------------------------------------
-    for i in range(0, row_max):
-        plt.subplot(row_max, 1, i+1)
-        plt.plot(traw, dataRaw['T']['X'].iloc[:, i])
-        plt.title('Input Feature: ' + inpLabel[i])
-        plt.xticks([])
-        plt.ylabel(inpLabel[i] + ' (' + setupDat['inpUnits'][inpLabel[i]][0] + ')')
-        plt.grid('on')
+    for i in range(row_max):
+        axs[i].plot(traw, dataRaw['T']['X'].iloc[:, i])
+        axs[i].set_title('Input Feature: ' + inpLabel[i])
+        axs[i].set_ylabel(inpLabel[i] + ' (' + setupDat['inpUnits'][inpLabel[i]][0] + ')')
+        axs[i].grid(True)
+        axs[i].set_xlim(x_min, x_max)
+
+    # Ensure that the x-tick labels are shown for the last subplot
+    axs[-1].set_xlabel('Time')
+    axs[-1].set_xticks(axs[-1].get_xticks())
 
     # ==============================================================================
     # Average Performance
@@ -206,39 +210,43 @@ def plotting(dataRaw, data, dataPred, resultsAvg, feaScore, feaError, setupDat):
     # ==============================================================================
     # Temporal Performance
     # ==============================================================================
-    for i in range(0, len(setupDat['out'])):
+    for i in range(len(setupDat['out'])):
         ii = i + 1
-        plt.figure()
-        plt.subplot(411)
-        plt.plot(t, data['y'][:, i])
-        plt.plot(t, dataPred['y'][:, i])
-        plt.title('Values prediction ' + outLabel[ii - 1])
-        plt.xticks([])
-        plt.ylabel(outLabel[ii - 1] + ' (' + setupDat['outUnits'][outLabel[ii - 1]][0] + ')')
-        plt.grid('on')
-        plt.legend(['True', 'Pred'])
+        fig, axs = plt.subplots(4, 1, sharex=True)
+        fig.suptitle('Prediction Analysis for ' + outLabel[ii - 1], size=18)
+        plt.subplots_adjust(hspace=0.35, left=0.075, right=0.925, top=0.90, bottom=0.075)
 
-        plt.subplot(412)
-        plt.plot(t, data['y'][:, i]-dataPred['y'][:, i])
-        plt.title('Error prediction ' + outLabel[ii - 1])
-        plt.xticks([])
-        plt.ylabel(outLabel[ii - 1] + ' (' + setupDat['outUnits'][outLabel[ii - 1]][0] + ')')
-        plt.grid('on')
+        # Plotting the values prediction
+        axs[0].plot(t, data['y'][:, i])
+        axs[0].plot(t, dataPred['y'][:, i])
+        axs[0].set_title('Values prediction ' + outLabel[ii - 1])
+        axs[0].set_ylabel(outLabel[ii - 1] + ' (' + setupDat['outUnits'][outLabel[ii - 1]][0] + ')')
+        axs[0].grid(True)
+        axs[0].legend(['True', 'Pred'])
+        axs[0].set_xlim(x_min, x_max)
 
-        plt.subplot(413)
-        plt.plot(t, 2 * data['L'][:, i], color=colors[0])
-        plt.plot(t, dataPred['L'][:, i], color=colors[1])
-        plt.title('States labels ' + outLabel[ii - 1])
-        plt.xticks([])
-        plt.ylabel(outLabel[ii - 1] + ' (On/Off)')
-        plt.legend(['True', 'Pred'])
-        plt.grid('on')
+        # Plotting the error prediction
+        axs[1].plot(t, data['y'][:, i] - dataPred['y'][:, i])
+        axs[1].set_title('Error prediction ' + outLabel[ii - 1])
+        axs[1].set_ylabel(outLabel[ii - 1] + ' (' + setupDat['outUnits'][outLabel[ii - 1]][0] + ')')
+        axs[1].grid(True)
+        axs[1].set_xlim(x_min, x_max)
 
-        plt.subplot(414)
-        plt.plot(t, data['L'][:, i] - dataPred['L'][:, i])
-        plt.title('Error labels ' + outLabel[ii - 1])
-        plt.xlabel('time (hrs)')
-        plt.ylabel(outLabel[ii - 1] + ' (On/Off)')
-        plt.grid('on')
+        # Plotting the states labels
+        axs[2].plot(t, 2 * data['L'][:, i], color=colors[0])
+        axs[2].plot(t, dataPred['L'][:, i], color=colors[1])
+        axs[2].set_title('States labels ' + outLabel[ii - 1])
+        axs[2].set_ylabel(outLabel[ii - 1] + ' (On/Off)')
+        axs[2].legend(['True', 'Pred'])
+        axs[2].grid(True)
+        axs[2].set_xlim(x_min, x_max)
+
+        # Plotting the error labels
+        axs[3].plot(t, data['L'][:, i] - dataPred['L'][:, i])
+        axs[3].set_title('Error labels ' + outLabel[ii - 1])
+        axs[3].set_xlabel('time (hrs)')
+        axs[3].set_ylabel(outLabel[ii - 1] + ' (On/Off)')
+        axs[3].grid(True)
+        axs[3].set_xlim(x_min, x_max)
 
     plt.show()

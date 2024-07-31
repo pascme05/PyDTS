@@ -305,16 +305,6 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # Post-Processing
     ###################################################################################################################
     # ==============================================================================
-    # Limiting for Forecasting
-    # ==============================================================================
-    if setupPar['solver'] == 'SF' and train == 2:
-        try:
-            data['X'] = data['X'].head(setupPar['ahead'])
-            data['y'] = data['y'].head(setupPar['ahead'])
-        except:
-            print("WARN: Data includes too few row, %s rows needed", setupPar['ahead'])
-
-    # ==============================================================================
     # Rolling input features
     # ==============================================================================
     if setupPar['feat'] >= 2:
