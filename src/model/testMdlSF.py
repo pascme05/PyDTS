@@ -112,7 +112,7 @@ def testMdlSF(data, setupDat, setupPar, _, setupExp):
     # Test
     # ==============================================================================
     try:
-        if dataTest.shape[0] > setupPar['ahead']:
+        if K > 1:
             for i in range(0, K):
                 start = i * setupPar['ahead']
                 ende = (i + 1) * setupPar['ahead']
@@ -129,10 +129,19 @@ def testMdlSF(data, setupDat, setupPar, _, setupExp):
         else:
             dataPred['T']['y'] = mdl.predict(futr_df=dataTest).to_numpy('float')[:, 1].reshape(-1, 1)
     except:
-        if dataTest.shape[0] > setupPar['ahead']:
+        if K > 1:
             for i in range(0, K):
                 start = i * setupPar['ahead']
                 ende = (i + 1) * setupPar['ahead']
+                dataTest = copy.deepcopy(data['T']['X'][start:ende])
+                dataTest = pd.DataFrame(data=dataTest, columns=setupDat['inpLabel'])
+                dataTest.drop(setupDat['out'], axis=1, inplace=True)
+                dataTest.drop(setupDat['his'], axis=1, inplace=True)
+                datetime_index = pd.date_range(start=start_time, periods=(setupPar['ahead'] + 2),
+                                               freq=f'{sampling_times}S')
+                datetime_index = datetime_index[1:-1]
+                dataTest.insert(0, 'ds', datetime_index)
+                dataTest.insert(0, 'unique_id', 1.0)
                 dataPred['T']['y'][start:ende] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
         else:
             dataPred['T']['y'] = mdl.predict().to_numpy('float')[:, 1].reshape(-1, 1)
