@@ -18,6 +18,7 @@
 # ==============================================================================
 from src.general.helpFnc import normVal
 from src.general.featuresRoll import featuresRoll
+from src.general.featuresPhy import featuresPhy
 
 # ==============================================================================
 # External
@@ -313,6 +314,11 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
         data['X'] = featuresRoll(data['X'].drop(['time', 'id'], axis=1), setupMdl)
         data['X']['time'] = tempTime
         data['X']['id'] = tempID
+
+    # ==============================================================================
+    # Physics input features
+    # ==============================================================================
+    # data['X'] = featuresPhy(data['X'])
 
     # ==============================================================================
     # Norm
