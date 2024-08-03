@@ -28,6 +28,7 @@ import os
 from sklearn.utils import class_weight
 import time
 from sys import getsizeof
+from tensorflow.keras.callbacks import CSVLogger
 
 
 #######################################################################################################################
@@ -72,13 +73,16 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Name
     # ==============================================================================
-    mdlName = 'mdl/mdl_' + setupPar['model'] + '_' + setupExp['name'] + '/cp.ckpt'
+    save_dir = 'mdl/mdl_' + setupPar['model'] + '_' + setupExp['name']
+    os.makedirs(save_dir, exist_ok=True)
+    mdlName = save_dir + '/cp.ckpt'
+    log_file = os.path.join(save_dir, 'training_log.csv')
 
     # ==============================================================================
     # Callbacks
     # ==============================================================================
-    callbacks = [
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=setupMdl['patience'], restore_best_weights=True)]
+    callbacks = [tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=setupMdl['patience'],
+                                                  restore_best_weights=True)]
 
     ###################################################################################################################
     # Pre-Processing
@@ -227,6 +231,11 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # ------------------------------------------
     callbacks.append(tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', verbose=1, factor=0.5,
                                                           patience=int(setupMdl['patience'] / 2), min_lr=1e-9))
+
+    # ------------------------------------------
+    # Log Files
+    # ------------------------------------------
+    callbacks.append(CSVLogger(log_file, append=True))
 
     # ==============================================================================
     # Start timer
