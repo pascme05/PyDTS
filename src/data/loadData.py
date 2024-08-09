@@ -318,7 +318,7 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     # Physics input features
     # ==============================================================================
-    # data['X'] = featuresPhy(data['X'])
+    # [data['X'], units['Input']] = featuresPhy(data['X'])
 
     # ==============================================================================
     # Norm
