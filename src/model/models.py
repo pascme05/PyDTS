@@ -147,6 +147,66 @@ def tfMdlTran(X_train, output, activation):
     return mdl
 
 
+# ==============================================================================
+# TRAN-2
+# ==============================================================================
+# Transformer Encoder Block
+class TransformerBlock2(tf.keras.layers.Layer):
+    def __init__(self, head_size=64, num_heads=4, ff_dim=64, dropout=0.1):
+        super(TransformerBlock2, self).__init__()
+        self.att = tf.keras.layers.MultiHeadAttention(num_heads=num_heads, key_dim=head_size)
+        self.norm1 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout1 = tf.keras.layers.Dropout(dropout)
+
+        self.ffn = tf.keras.Sequential([
+            tf.keras.layers.Dense(ff_dim, activation="relu"),
+            tf.keras.layers.Dense(head_size)
+        ])
+        self.norm2 = tf.keras.layers.LayerNormalization(epsilon=1e-6)
+        self.dropout2 = tf.keras.layers.Dropout(dropout)
+
+    def call(self, inputs, training=False):
+        attn_output = self.att(inputs, inputs)
+        attn_output = self.dropout1(attn_output, training=training)
+        out1 = self.norm1(inputs + attn_output)  # Residual connection
+
+        ffn_output = self.ffn(out1)
+        ffn_output = self.dropout2(ffn_output, training=training)
+        return self.norm2(out1 + ffn_output)  # Residual connection
+
+
+# Updated Model Function
+def tfMdlTran2(X_train, outputdim, activation):
+    inputs = tf.keras.layers.Input(shape=X_train.shape[1:])
+
+    # CNN Feature Extractor
+    x = tf.keras.layers.Conv1D(filters=30, kernel_size=10, activation='relu', padding="same", strides=1)(inputs)
+    x = tf.keras.layers.Conv1D(filters=30, kernel_size=8, activation='relu', padding="same", strides=1)(x)
+    x = tf.keras.layers.Conv1D(filters=40, kernel_size=6, activation='relu', padding="same", strides=1)(x)
+    x = tf.keras.layers.Conv1D(filters=50, kernel_size=5, activation='relu', padding="same", strides=1)(x)
+    x = tf.keras.layers.Conv1D(filters=50, kernel_size=5, activation='relu', padding="same", strides=1)(x)
+    x = tf.keras.layers.MaxPooling1D(pool_size=4, strides=2, padding='same')(x)
+
+    # LSTM for Temporal Dependencies
+    x = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(64, return_sequences=True))(x)
+    x = tf.keras.layers.Bidirectional(tf.keras.layers.LSTM(32, return_sequences=True))(x)
+    x = tf.keras.layers.Dense(64)(x)
+
+    # Transformer Encoder (Fixed!)
+    x = TransformerBlock2()(x)
+
+    # Fully Connected Layers
+    x = tf.keras.layers.Flatten()(x)
+    x = tf.keras.layers.Dense(64, activation="relu")(x)
+    x = tf.keras.layers.Dense(32, activation="relu")(x)
+    x = tf.keras.layers.Dense(outputdim, activation=activation)(x)
+
+    mdl = tf.keras.models.Model(inputs=inputs, outputs=x)
+    mdl.set_weights(mdl.get_weights())
+
+    return mdl
+
+
 #######################################################################################################################
 # Denoising Models
 #######################################################################################################################
