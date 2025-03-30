@@ -17,7 +17,8 @@
 # Internal
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE, tfMdlINF
+from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE, tfMdlINF, tfMdlTFS
+from src.general.helpFnc import pad_dataset
 
 # ==============================================================================
 # External
@@ -58,6 +59,11 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     dataPred = {'T': {}}
 
     # ==============================================================================
+    # Parameters
+    # ==============================================================================
+    BATCH_SIZE = setupMdl['batch']
+
+    # ==============================================================================
     # Name
     # ==============================================================================
     mdlName = 'mdl/mdl_' + setupPar['model'] + '_' + setupExp['name'] + '/cp.ckpt'
@@ -69,6 +75,9 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # Reshape Data
     # ==============================================================================
     [data['T']['X'], data['T']['y']] = reshapeMdlData(data['T']['X'], data['T']['y'], setupDat, setupPar, 0)
+    testX, testY, pad = pad_dataset(data['T']['X'], data['T']['y'], BATCH_SIZE)
+    test = tf.data.Dataset.from_tensor_slices((testX, testY))
+    test = test.cache().batch(BATCH_SIZE)
 
     # ==============================================================================
     # Model Input and Output
@@ -128,6 +137,12 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     if setupPar['model'] == "INF":
         mdl = tfMdlINF(data['T']['X'], out, activation)
 
+    # ------------------------------------------
+    # TFS
+    # ------------------------------------------
+    if setupPar['model'] == "TFS":
+        mdl = tfMdlTFS(data['T']['X'], out, activation, BATCH_SIZE)
+
     mdl.summary()
 
     ###################################################################################################################
@@ -175,8 +190,7 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Test
     # ==============================================================================
-    dataPred['T']['y'] = mdl.predict(data['T']['X'])
-    dataPred['T']['X'] = data['T']['X']
+    dataPred['T']['y'] = mdl.predict(test)
 
     # ==============================================================================
     # End timer
@@ -187,6 +201,15 @@ def testMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     # Post-Processing
     ###################################################################################################################
+    # ==============================================================================
+    # Limit Length
+    # ==============================================================================
+    dataPred['T']['y'] = dataPred['T']['y'][:-pad]
+    dataPred['T']['X'] = data['T']['X']
+
+    # ==============================================================================
+    # Time
+    # ==============================================================================
     print("INFO: Total inference time (ms): %.2f" % (testTime * 1000))
     print("INFO: Inference time per sample (us): %.2f" % (testTime / data['T']['X'].shape[0] * 1000 * 1000))
     print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))

@@ -17,7 +17,7 @@
 # Internal
 # ==============================================================================
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE, tfMdlINF
+from src.model.models import tfMdlCNN, tfMdlDNN, tfMdlLSTM, tfMdlTran, tfMdlDAE, tfMdlINF, tfMdlTFS
 
 # ==============================================================================
 # External
@@ -163,6 +163,12 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     if setupPar['model'] == "INF":
         mdl = tfMdlINF(data['T']['X'], out, activation)
 
+    # ------------------------------------------
+    # TFS
+    # ------------------------------------------
+    if setupPar['model'] == "TFS":
+        mdl = tfMdlTFS(data['T']['X'], out, activation, BATCH_SIZE)
+
     mdl.summary()
 
     ###################################################################################################################
@@ -181,9 +187,9 @@ def trainMdlDL(data, setupDat, setupPar, setupMdl, setupExp):
     # Create Data
     # ==============================================================================
     train = tf.data.Dataset.from_tensor_slices((data['T']['X'], data['T']['y']))
-    train = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat()
+    train = train.cache().shuffle(BUFFER_SIZE).batch(BATCH_SIZE, drop_remainder=True).repeat()
     val = tf.data.Dataset.from_tensor_slices((data['V']['X'], data['V']['y']))
-    val = val.batch(BATCH_SIZE).repeat()
+    val = val.batch(BATCH_SIZE, drop_remainder=True).repeat()
 
     # ==============================================================================
     # Compiling

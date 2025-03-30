@@ -113,3 +113,46 @@ def addNoise(data, noise):
     data = data * (1 + noise)
 
     return data
+
+
+#######################################################################################################################
+# Pad Data
+#######################################################################################################################
+def pad_dataset(X, y, batch_size):
+    """
+    Pads the dataset X and y to make sure that the total number of samples is divisible by the batch_size.
+    Works for both 2D and 3D data.
+
+    Parameters:
+    X: 2D or 3D numpy array of input features
+    y: 2D numpy array of labels
+    batch_size: The desired batch size
+
+    Returns:
+    X_padded: Padded input data
+    y_padded: Padded labels
+    padding_size: The number of padding samples added
+    """
+
+    # Determine the padding size based on the number of samples
+    padding_size = batch_size - (X.shape[0] % batch_size)
+    padding_data = 0
+    padding_labels = 0
+
+    if padding_size == batch_size:  # No padding needed if the size is already divisible
+        return X, y, 0  # Return the original data with no padding
+
+    # Padding logic
+    if len(X.shape) == 2:  # 2D array (samples, features)
+        padding_data = np.zeros((padding_size, X.shape[1]))  # Padding with zeros, shape should match features
+        padding_labels = np.zeros((padding_size, y.shape[1]))  # Padding the labels with zeros
+
+    elif len(X.shape) == 3:  # 3D array (samples, time_steps, features)
+        padding_data = np.zeros((padding_size, X.shape[1], X.shape[2]))  # Padding with zeros
+        padding_labels = np.zeros((padding_size, y.shape[1]))  # Padding labels with zeros
+
+    # Concatenate the original data with the padding
+    X_padded = np.concatenate([X, padding_data], axis=0)
+    y_padded = np.concatenate([y, padding_labels], axis=0)
+
+    return X_padded, y_padded, padding_size
