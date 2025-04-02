@@ -142,14 +142,19 @@ def pad_dataset(X, y, batch_size):
     if padding_size == batch_size:  # No padding needed if the size is already divisible
         return X, y, 0  # Return the original data with no padding
 
-    # Padding logic
+    # Padding logic X
     if len(X.shape) == 2:  # 2D array (samples, features)
         padding_data = np.zeros((padding_size, X.shape[1]))  # Padding with zeros, shape should match features
-        padding_labels = np.zeros((padding_size, y.shape[1]))  # Padding the labels with zeros
 
     elif len(X.shape) == 3:  # 3D array (samples, time_steps, features)
         padding_data = np.zeros((padding_size, X.shape[1], X.shape[2]))  # Padding with zeros
-        padding_labels = np.zeros((padding_size, y.shape[1]))  # Padding labels with zeros
+
+    # Padding logic y
+    if len(y.shape) == 2:  # 2D array (samples, features)
+        padding_labels = np.zeros((padding_size, y.shape[1]))  # Padding the labels with zeros
+
+    elif len(y.shape) == 3:  # 3D array (samples, time_steps, features)
+        padding_labels = np.zeros((padding_size, y.shape[1], y.shape[2]))  # Padding labels with zeros
 
     # Concatenate the original data with the padding
     X_padded = np.concatenate([X, padding_data], axis=0)
