@@ -23,6 +23,7 @@
 from os.path import dirname, join as pjoin
 import os
 import numpy as np
+import pandas as pd
 
 
 #######################################################################################################################
@@ -161,3 +162,86 @@ def pad_dataset(X, y, batch_size):
     y_padded = np.concatenate([y, padding_labels], axis=0)
 
     return X_padded, y_padded, padding_size
+
+
+#######################################################################################################################
+# Shuffle Data
+#######################################################################################################################
+def shuffle_subarrays(X, y, id_vector, seed=42):
+    unique_ids = np.unique(id_vector)
+
+    # Set random generator for reproducibility
+    rng = np.random.default_rng(seed)
+
+    # Shuffle the order of the unique IDs
+    shuffled_ids = unique_ids.copy()
+    rng.shuffle(shuffled_ids)
+
+    # Build shuffled X and y based on the new order
+    X_shuffled = []
+    y_shuffled = []
+
+    for uid in shuffled_ids:
+        idxs = np.where(id_vector == uid)[0]
+        X_shuffled.append(X.iloc[idxs])
+        y_shuffled.append(y.iloc[idxs])
+
+    X_shuffled = pd.concat(X_shuffled, ignore_index=True)
+    y_shuffled = pd.concat(y_shuffled, ignore_index=True)
+    X_shuffled['time'] = X['time']
+    y_shuffled['time'] = y['time']
+
+    return X_shuffled, y_shuffled
+
+
+#######################################################################################################################
+# Balance Data
+#######################################################################################################################
+def balance_window(X, y, window_size=20, step=1, strategy='mean', n_bins=3, n_per_bin=10, seed=42):
+    rng = np.random.default_rng(seed)
+    T = len(X)
+
+    window_indices = []
+    metrics = []
+
+    # Step 1: Create windows and compute metric
+    for start in range(0, T - window_size + 1, step):
+        end = start + window_size
+        y_win = y.iloc[start:end]
+
+        if strategy == 'avg':
+            metric = y_win.values.mean()
+        elif strategy == 'std':
+            metric = y_win.values.std()
+        elif strategy == 'rng':
+            metric = y_win.values.max() - y_win.values.min()
+        else:
+            raise ValueError(f"Unsupported strategy: {strategy}")
+
+        window_indices.append((start, end))
+        metrics.append(metric)
+
+    metrics = np.array(metrics)
+
+    # Step 2: Bin the metrics
+    bins = np.quantile(metrics, np.linspace(0, 1, n_bins + 1))
+    bin_ids = np.digitize(metrics, bins, right=False) - 1
+    bin_ids = np.clip(bin_ids, 0, n_bins - 1)
+
+    # Step 3: Sample windows from each bin
+    selected_time_indices = set()
+    for b in range(n_bins):
+        idxs = np.where(bin_ids == b)[0]
+        if len(idxs) == 0:
+            continue
+        sampled = rng.choice(idxs, size=min(n_per_bin, len(idxs)), replace=False)
+        for i in sampled:
+            start, end = window_indices[i]
+            selected_time_indices.update(range(start, end))
+
+    # Step 4: Sort indices and extract data
+    selected_time_indices = sorted(selected_time_indices)
+    X_balanced = X.iloc[selected_time_indices].reset_index(drop=True)
+    y_balanced = y.iloc[selected_time_indices].reset_index(drop=True)
+
+    return X_balanced, y_balanced

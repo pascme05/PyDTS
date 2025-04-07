@@ -28,6 +28,7 @@ from src.model.trainMdlSF import trainMdlSF
 from src.model.trainMdlCL import trainMdlCL
 from src.general.adaptDim import adaptDim
 from src.data.summaryData import summaryData
+from src.general.helpFnc import balance_window
 
 # ==============================================================================
 # External
@@ -70,6 +71,18 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # ==============================================================================
     [data['T'], t, _] = preprocess(data['T'], copy.deepcopy(setupDat), setupPar)
     [data['V'], _, _] = preprocess(data['V'], setupDat, setupPar)
+
+    # ==============================================================================
+    # Balancing
+    # ==============================================================================
+    if setupPar['frame'] == 1 and setupDat['balance'] == -1:
+        [data['T']['X'], data['T']['y']] = balance_window(data['T']['X'], data['T']['y'], window_size=setupMdl['batch'],
+                                                          step=setupMdl['batch'], strategy='avg', n_bins=3, n_per_bin=10)
+        [data['V']['X'], data['V']['y']] = balance_window(data['V']['X'], data['V']['y'], window_size=setupMdl['batch'],
+                                                          step=setupMdl['batch'], strategy='avg', n_bins=3, n_per_bin=10)
+        print("INFO: Data equally balanced")
+    else:
+        print("INFO: Data is not balanced")
 
     # ==============================================================================
     # Msg

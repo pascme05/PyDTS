@@ -86,7 +86,7 @@ setupExp['plot'] = 1                                                            
 # ------------------------------------------
 setupDat['type'] = 'xlsx'                                                                                               # data input type: 1) 'xlsx', 2) 'csv', 3) 'mat'
 setupDat['batch'] = 100000                                                                                              # number of samples fed at once to training
-setupDat['Shuffle'] = False                                                                                             # False: no shuffling, True: shuffling data when splitting
+setupDat['Shuffle'] = False                                                                                             # False: no shuffling, True: shuffling data when splitting, 'ID': For ID based data shuffle IDs
 setupDat['rT'] = 0.9                                                                                                    # training proportion (0, 1)
 setupDat['rV'] = 0.2                                                                                                    # validation proportion (0, 1) as percentage from training proportion
 setupDat['idT'] = [2]                                                                                                   # list of testing ids for method 3)
@@ -126,7 +126,7 @@ setupDat['outFil'] = 0                                                          
 setupDat['inpFilLen'] = 61                                                                                              # filter length input data (samples)
 setupDat['outFilLen'] = 61                                                                                              # filter length output data (samples)
 setupDat['threshold'] = 500                                                                                             # 0) no threshold x) threshold to transform regressio into classification data
-setupDat['balance'] = 0                                                                                                 # 0) no balancing 1) balancing based classes, x) balancing based on x bins
+setupDat['balance'] = 0                                                                                                 # 0) no balancing 1) balancing based classes, x) balancing based on x bins, -1) balancing based on function
 
 # ==============================================================================
 # General Parameters

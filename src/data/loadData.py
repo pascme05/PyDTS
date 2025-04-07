@@ -16,7 +16,7 @@
 # ==============================================================================
 # Internal
 # ==============================================================================
-from src.general.helpFnc import normVal
+from src.general.helpFnc import normVal, shuffle_subarrays
 from src.general.featuresRoll import featuresRoll
 from src.general.featuresPhy import featuresPhy
 
@@ -47,7 +47,10 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     # Parameters
     # ==============================================================================
-    shu = setupDat['Shuffle']
+    if setupDat['Shuffle'] == 'ID':
+        shu = False
+    else:
+        shu = setupDat['Shuffle']
 
     # ==============================================================================
     # Variables
@@ -151,6 +154,12 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     if method == 0:
         # ------------------------------------------
+        # Shuffle IDs
+        # ------------------------------------------
+        if setupDat['Shuffle'] == 'ID':
+            [data['X'], data['y']] = shuffle_subarrays(data['X'], data['y'], data['y']['id'], seed=42)
+
+        # ------------------------------------------
         # Training
         # ------------------------------------------
         if train == 1:
@@ -180,6 +189,12 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # k-Fold
     # ==============================================================================
     elif method == 1:
+        # ------------------------------------------
+        # Shuffle IDs
+        # ------------------------------------------
+        if setupDat['Shuffle'] == 'ID':
+            [data['X'], data['y']] = shuffle_subarrays(data['X'], data['y'], data['y']['id'], seed=42)
+
         # ------------------------------------------
         # Init
         # ------------------------------------------
