@@ -12,3 +12,4 @@ openpyxl==3.1.2
 keras-tuner==1.4.7
 texttable==1.7.0
 neuralforecast==1.7.2
+tensorflow-probability==0.20.0
