@@ -20,7 +20,7 @@
 # ==============================================================================
 # External
 # ==============================================================================
-import tensorflow as tf
+from src.general.helpFnc import setDevice, mdlSize
 import os
 import time
 from sys import getsizeof
@@ -45,13 +45,7 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # CPU/GPU
     # ==============================================================================
-    if setupExp['gpu'] == 1:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-        physical_devices = tf.config.list_physical_devices('GPU')
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-        tf.config.set_visible_devices([], 'GPU')
+    setDevice(setupExp['gpu'])
 
     # ==============================================================================
     # Parameters
@@ -136,10 +130,10 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     # Loading
     ###################################################################################################################
-    try:
+    if os.path.isdir(mdlName):
         mdl = NeuralForecast.load(path=mdlName)
         print("INFO: Model will be retrained")
-    except:
+    else:
         print("INFO: Model will be created")
 
     ###################################################################################################################
@@ -174,4 +168,4 @@ def trainMdlSF(data, setupDat, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     print("INFO: Total training time (sec): %.2f" % trainTime)
     print("INFO: Training time per sample (ms): %.2f" % (trainTime / data['T']['X'].shape[0] * 1000))
-    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
+    print("INFO: Model size (kB): %.2f" % mdlSize(mdl))

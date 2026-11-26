@@ -130,11 +130,11 @@ def featureRank(X, y, setupDat, setupMdl, setupPar):
         pos = ax.matshow(rank, cmap='Blues', interpolation='none')
         fig.colorbar(pos)
         if setupPar['rank'] == 2:
-            ax.set_xticklabels(outLabel)
-            ax.set_yticklabels(inpLabel)
+            ax.set_xticks(range(len(outLabel)), outLabel, rotation=90)
+            ax.set_yticks(range(len(inpLabel)), inpLabel)
         else:
-            ax.set_xticklabels(inpLabel)
-            ax.set_yticklabels(inpLabel)
+            ax.set_xticks(range(len(inpLabel)), inpLabel, rotation=90)
+            ax.set_yticks(range(len(inpLabel)), inpLabel)
         plt.title("Feature Ranking")
 
     ###################################################################################################################

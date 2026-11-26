@@ -27,7 +27,31 @@ import numpy as np
 #######################################################################################################################
 # Function
 #######################################################################################################################
-def framing(data, window, overlap):
+def idBlocks(ids, n):
+    """Start and end rows of the contiguous ID blocks of a series with n rows (one block if ids is None)."""
+    if ids is None:
+        return [(0, n)]
+    ids = np.asarray(ids)[:n]
+    cut = np.r_[0, np.flatnonzero(ids[1:] != ids[:-1]) + 1, len(ids)]
+
+    return [(int(cut[k]), int(cut[k + 1])) for k in range(len(cut) - 1)]
+
+
+def frameBlock(data, window, step):
+    """Frames of one contiguous block: (N, window) for one column, (N, window, F) for several columns."""
+    if data.ndim == 1:
+        return sliding_window(data, window, step)
+
+    return np.stack([sliding_window(np.ascontiguousarray(data[:, i]), window, step) for i in range(data.shape[1])],
+                    axis=2)
+
+
+def framing(data, window, overlap, ids=None):
+    """
+    Frames data (DataFrame, T x F) into windows of length window with the given overlap. If ids (one ID per row) is
+    given, every contiguous ID block is framed separately, so that no window spans two IDs (blocks shorter than one
+    window give no frames).
+    """
     ###################################################################################################################
     # MSG IN
     ###################################################################################################################
@@ -36,41 +60,33 @@ def framing(data, window, overlap):
     ###################################################################################################################
     # Initialisation
     ###################################################################################################################
-    # ==============================================================================
-    # Parameters
-    # ==============================================================================
-    dim = data.ndim
-    fields = data.columns
-
-    ###################################################################################################################
-    # Calculation
-    ###################################################################################################################
-    if dim == 2 and data.shape[1] == 1:
-        dim = 1
-        data = data[fields[0]].values
-
-    ###################################################################################################################
-    # Calculation
-    ###################################################################################################################
-    # ==============================================================================
-    # Init
-    # ==============================================================================
+    values = np.asarray(data.values if hasattr(data, 'values') else data, dtype=float)
+    if values.ndim == 2 and values.shape[1] == 1:
+        values = values[:, 0]
     step = window - overlap
 
-    # ==============================================================================
-    # Calc
-    # ==============================================================================
-    if dim == 2:
-        temp = np.shape(data)
-        out = np.zeros((int(np.floor(temp[0] / step) + window), window, data.shape[1]))
-        for i in range(0, len(fields)):
-            temp = sliding_window(data[fields[i]].values, window, step)
-            out[0:len(temp), :, i] = sliding_window(data[fields[i]].values, window, step)
-        out = out[0:len(temp), :, :]
-    else:
-        out = sliding_window(data, window, step)
+    ###################################################################################################################
+    # Calculation
+    ###################################################################################################################
+    blocks = [(a, b) for a, b in idBlocks(ids, len(values)) if b - a >= window]
+    if not blocks:
+        raise SystemExit("ERROR: No ID block is longer than the window (%d samples)" % window)
+    if len(blocks) < len(idBlocks(ids, len(values))):
+        print("WARN: %d ID block(s) shorter than the window are skipped" % (len(idBlocks(ids, len(values))) - len(blocks)))
+    out = np.concatenate([frameBlock(values[a:b], window, step) for a, b in blocks], axis=0)
 
     ###################################################################################################################
     # Return
     ###################################################################################################################
     return out
+
+
+def frameIds(ids, n, window, overlap):
+    """ID of every frame produced by framing(..., ids) for a series with n rows."""
+    step = window - overlap
+    if ids is None:
+        return None
+    ids = np.asarray(ids)[:n]
+    out = [np.full(int(np.floor((b - a - window) / step)) + 1, ids[a]) for a, b in idBlocks(ids, n) if b - a >= window]
+
+    return np.concatenate(out)

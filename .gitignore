@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Runs
+logs/
+lightning_logs/
+
+# GUI
+config/_gui_run.xlsx
+results/gui/
+
+# Large ML models of the start.py model comparison (retrain with start.py, SVM ~30 min)
+mdl/*.joblib

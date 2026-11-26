@@ -26,10 +26,90 @@ from src.general.featuresPhy import featuresPhy
 import pandas as pd
 import numpy as np
 from os.path import join as pjoin
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 import copy
+import math
+import sys
 import scipy.io
+
+
+#######################################################################################################################
+# Helper
+#######################################################################################################################
+def splitIdx(n, ids, setupExp, setupDat, method, train, fold, shu):
+    """
+    Positional rows of one data frame (n rows, id column ids) for training (train=1), testing (train=2) or validation
+    (train=3), and the pool of rows the normalisation is computed from (training + validation rows, never test rows).
+    Validation rows are always removed from the training rows. ID split: every non-test ID is trained on; validation is
+    the last share rV of each validation ID (idV) that is a training ID, or of every training ID if there is none.
+    The split uses one fixed random permutation (seed 42)
+    when shuffling, so that inputs and outputs of equal length are split identically and repeated calls (training,
+    testing, normalisation) return disjoint sets.
+    """
+    # ==============================================================================
+    # Init
+    # ==============================================================================
+    idx = np.arange(n)
+    if shu is True:
+        idx = np.random.default_rng(42).permutation(n)
+
+    # ==============================================================================
+    # Pool (training + validation) and test rows
+    # ==============================================================================
+    # ------------------------------------------
+    # 1-Fold
+    # ------------------------------------------
+    if method == 0:
+        nTest = math.ceil((1 - setupDat['rT']) * n)
+        pool, test = idx[:n - nTest], idx[n - nTest:]
+
+    # ------------------------------------------
+    # k-Fold
+    # ------------------------------------------
+    elif method == 1:
+        pool, test = list(KFold(n_splits=setupExp['kfold']).split(idx))[fold - 1]
+        pool, test = idx[pool], idx[test]
+
+    # ------------------------------------------
+    # Transfer (separate files for training, validation and testing)
+    # ------------------------------------------
+    elif method == 2:
+        return idx, idx
+
+    # ------------------------------------------
+    # IDs
+    # ------------------------------------------
+    else:
+        ids = np.asarray(ids)
+        isTest = np.isin(ids[idx], setupDat['idT'])
+        pool, test = idx[~isTest], idx[isTest]
+        if train == 2:
+            return np.sort(test), pool
+        trainIds = list(pd.unique(ids[pool]))
+        valIds = [i for i in trainIds if i in list(np.atleast_1d(setupDat['idV']))]
+        if not valIds:
+            valIds = trainIds
+            if len(np.atleast_1d(setupDat['idV'])) and str(setupDat['idV']) not in ('', '[]', "['']"):
+                print("WARN: Validation IDs %s are no training IDs, the last %.0f %% of every training ID is used for "
+                      "validation" % (setupDat['idV'], 100 * setupDat['rV']))
+        val = []
+        for v in valIds:                                                                                                # last share rV of each ID
+            rows = pool[ids[pool] == v]
+            val.append(rows[len(rows) - int(np.floor(setupDat['rV'] * len(rows))):])
+        val = np.concatenate(val) if val else np.array([], dtype=int)
+        sel = val if train == 3 else pool[~np.isin(pool, val)]
+
+        return np.sort(sel), pool
+
+    # ==============================================================================
+    # Selection
+    # ==============================================================================
+    if train == 2:
+        return np.sort(test), pool
+    nVal = int(np.floor(setupDat['rV'] * len(pool)))
+    sel = pool[len(pool) - nVal:] if train == 3 else pool[:len(pool) - nVal]
+
+    return np.sort(sel), pool
 
 
 #######################################################################################################################
@@ -71,7 +151,7 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     # Excel
     # ==============================================================================
-    if setupDat['type'] == 'xlsx' or setupDat['type'] == 'csv':
+    if setupDat['type'] == 'xlsx':
         try:
             data['X'] = pd.read_excel(filename, sheet_name='input')
             data['y'] = pd.read_excel(filename, sheet_name='output')
@@ -81,8 +161,8 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
             units['Output'] = pd.DataFrame(columns=data['y'].columns)
             units['Output'].loc[0] = unitsRaw['Output'].dropna().values
             print("INFO: Data file loaded")
-        except:
-            print("ERROR: Data file could not be loaded")
+        except Exception as e:
+            sys.exit("ERROR: Data file %s could not be loaded (%s)" % (filename, e))
 
     # ==============================================================================
     # Mat-file
@@ -101,14 +181,15 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
             units['Output'] = pd.DataFrame(columns=raw['labelOut'])
             units['Output'].loc[0] = raw['unitOut']
             print("INFO: Data file loaded")
-        except:
-            print("ERROR: Data file could not be loaded")
+        except Exception as e:
+            sys.exit("ERROR: Data file %s could not be loaded (%s)" % (filename, e))
 
     # ==============================================================================
     # Default
     # ==============================================================================
     else:
-        print("ERROR: Data format not available")
+        sys.exit("ERROR: Data format %s not available, use xlsx (sheets input, output, units) or mat"
+                 % setupDat['type'])
 
     ###################################################################################################################
     # Pre-Processing
@@ -150,172 +231,22 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # Calculating
     ###################################################################################################################
     # ==============================================================================
-    # 1-Fold
+    # Shuffle IDs
     # ==============================================================================
-    if method == 0:
-        # ------------------------------------------
-        # Shuffle IDs
-        # ------------------------------------------
-        if setupDat['Shuffle'] == 'ID':
-            [data['X'], data['y']] = shuffle_subarrays(data['X'], data['y'], data['y']['id'], seed=42)
-
-        # ------------------------------------------
-        # Training
-        # ------------------------------------------
-        if train == 1:
-            data['X'], _ = train_test_split(data['X'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=shu)
-            data['y'], _ = train_test_split(data['y'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=shu)
-
-        # ------------------------------------------
-        # Testing
-        # ------------------------------------------
-        elif train == 2:
-            _, data['X'] = train_test_split(data['X'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=shu)
-            _, data['y'] = train_test_split(data['y'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=shu)
-
-        # ------------------------------------------
-        # Validation
-        # ------------------------------------------
-        else:
-            # Split
-            X, _ = train_test_split(data['X'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=False)
-            y, _ = train_test_split(data['y'], test_size=(1 - setupDat['rT']), random_state=None, shuffle=False)
-
-            # Extract
-            data['X'], _ = train_test_split(X, test_size=(1 - setupDat['rV']), random_state=None, shuffle=shu)
-            data['y'], _ = train_test_split(y, test_size=(1 - setupDat['rV']), random_state=None, shuffle=shu)
+    if setupDat['Shuffle'] == 'ID' and method in (0, 1):
+        [data['X'], data['y']] = shuffle_subarrays(data['X'], data['y'], data['y']['id'], seed=42)
+    if shu is True and len(data['X']) != len(data['y']):
+        print("WARN: Inputs and outputs have different lengths, data are split without shuffling")
+        shu = False
 
     # ==============================================================================
-    # k-Fold
+    # Split (rows of the set and of the normalisation pool)
     # ==============================================================================
-    elif method == 1:
-        # ------------------------------------------
-        # Shuffle IDs
-        # ------------------------------------------
-        if setupDat['Shuffle'] == 'ID':
-            [data['X'], data['y']] = shuffle_subarrays(data['X'], data['y'], data['y']['id'], seed=42)
-
-        # ------------------------------------------
-        # Init
-        # ------------------------------------------
-        kfX = KFold(n_splits=setupExp['kfold'])
-        kfX.get_n_splits(data['X'])
-        kfy = KFold(n_splits=setupExp['kfold'])
-        kfy.get_n_splits(data['y'])
-
-        # ------------------------------------------
-        # Training
-        # ------------------------------------------
-        if train == 1:
-            # X
-            iter = 0
-            for idx, _ in kfX.split(data['X']):
-                iter = iter + 1
-                if iter == fold:
-                    data['X'] = data['X'].iloc[idx, :]
-                    break
-
-            # y
-            iter = 0
-            for idx, _ in kfy.split(data['y']):
-                iter = iter + 1
-                if iter == fold:
-                    data['y'] = data['y'].iloc[idx, :]
-                    break
-
-        # ------------------------------------------
-        # Testing
-        # ------------------------------------------
-        elif train == 2:
-            # X
-            iter = 0
-            for idx1, idx2 in kfX.split(data['X']):
-                iter = iter + 1
-                if iter == fold:
-                    data['X'] = data['X'].iloc[idx2, :]
-                    break
-
-            # y
-            iter = 0
-            for idx1, idx2 in kfy.split(data['y']):
-                iter = iter + 1
-                if iter == fold:
-                    data['y'] = data['y'].iloc[idx2, :]
-                    break
-
-        # ------------------------------------------
-        # Validation
-        # ------------------------------------------
-        else:
-            # X
-            iter = 0
-            for idx, _ in kfX.split(data['X']):
-                iter = iter + 1
-                if iter == fold:
-                    data['X'] = data['X'].iloc[idx, :]
-                    break
-
-            # y
-            iter = 0
-            for idx, _ in kfy.split(data['y']):
-                iter = iter + 1
-                if iter == fold:
-                    data['y'] = data['y'].iloc[idx, :]
-                    break
-
-            # Extract
-            data['X'], _ = train_test_split(data['X'], test_size=(1 - setupDat['rV']), random_state=None, shuffle=shu)
-            data['y'], _ = train_test_split(data['y'], test_size=(1 - setupDat['rV']), random_state=None, shuffle=shu)
-
-    # ==============================================================================
-    # Transfer
-    # ==============================================================================
-    elif method == 2:
-        data['X'] = data['X']
-        data['y'] = data['y']
-
-    # ==============================================================================
-    # IDs
-    # ==============================================================================
-    else:
-        # ------------------------------------------
-        # Init
-        # ------------------------------------------
-        idTest = setupDat['idT']
-        idVal = setupDat['idV']
-
-        # ------------------------------------------
-        # Training
-        # ------------------------------------------
-        if train == 1:
-            # Split
-            for sel in idTest:
-                data['X'].drop(data['X'][data['X']['id'] == sel].index, inplace=True)
-                data['y'].drop(data['y'][data['y']['id'] == sel].index, inplace=True)
-
-        # ------------------------------------------
-        # Testing
-        # ------------------------------------------
-        elif train == 2:
-            # Init
-            idTrain = [sel for sel in data['X']['id'].unique() if sel not in idTest]
-
-            # Split
-            for sel in idTrain:
-                data['X'].drop(data['X'][data['X']['id'] == sel].index, inplace=True)
-                data['y'].drop(data['y'][data['y']['id'] == sel].index, inplace=True)
-
-        # ------------------------------------------
-        # Validation
-        # ------------------------------------------
-        else:
-            # Init
-            idTrain = [sel for sel in data['X']['id'].unique() if sel not in idVal]
-
-            # Split
-            for sel in idTrain:
-                data['X'].drop(data['X'][data['X']['id'] == sel].index, inplace=True)
-                data['y'].drop(data['y'][data['y']['id'] == sel].index, inplace=True)
+    pool = {}
+    for key in ('X', 'y'):
+        [sel, rows] = splitIdx(len(data[key]), data[key]['id'].values, setupExp, setupDat, method, train, fold, shu)
+        pool[key] = data[key].iloc[np.sort(rows)]
+        data[key] = data[key].iloc[sel]
 
     ###################################################################################################################
     # Post-Processing
@@ -324,11 +255,12 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # Rolling input features
     # ==============================================================================
     if setupPar['feat'] >= 2:
-        tempTime = copy.deepcopy(data['X']['time'])
-        tempID = copy.deepcopy(data['X']['id'])
-        data['X'] = featuresRoll(data['X'].drop(['time', 'id'], axis=1), setupMdl)
-        data['X']['time'] = tempTime
-        data['X']['id'] = tempID
+        for frame in (data, pool):
+            tempTime = copy.deepcopy(frame['X']['time'])
+            tempID = copy.deepcopy(frame['X']['id'])
+            frame['X'] = featuresRoll(frame['X'].drop(['time', 'id'], axis=1), setupMdl, tempID.values)
+            frame['X']['time'] = tempTime
+            frame['X']['id'] = tempID
 
     # ==============================================================================
     # Physics input features
@@ -338,8 +270,8 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     # Norm
     # ==============================================================================
-    [maxX, maxY, minX, minY, uX, uY, sX, sY] = normVal(data['X'].drop(['time', 'id'], axis=1),
-                                                       data['y'].drop(['time', 'id'], axis=1))
+    [maxX, maxY, minX, minY, uX, uY, sX, sY] = normVal(pool['X'].drop(['time', 'id'], axis=1),
+                                                       pool['y'].drop(['time', 'id'], axis=1))
 
     # ==============================================================================
     # Labels
@@ -354,9 +286,9 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # ==============================================================================
     # Sampling Time
     # ==============================================================================
-    setupDat['Ts_raw_X'] = data['X']['time'].iloc[1] - data['X']['time'].iloc[0]
+    setupDat['Ts_raw_X'] = float(np.median(np.diff(data['X']['time'].values[:1000])))                      # robust to gaps
     setupDat['fs_raw_X'] = 1 / setupDat['Ts_raw_X']
-    setupDat['Ts_raw_y'] = data['y']['time'].iloc[1] - data['y']['time'].iloc[0]
+    setupDat['Ts_raw_y'] = float(np.median(np.diff(data['y']['time'].values[:1000])))
     setupDat['fs_raw_y'] = 1 / setupDat['Ts_raw_y']
 
     # ==============================================================================
@@ -368,7 +300,7 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     for names in data['X']:
         if pd.isna(data['X'][names]).any():
             data['X'][names] = data['X'][names].interpolate(limit_direction='both')
-            print("WARN: NaN in data column %s detected using interpolation", names)
+            print("WARN: NaN in data column %s detected using interpolation" % names)
 
     # ------------------------------------------
     # Output
@@ -376,7 +308,7 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     for names in data['y']:
         if pd.isna(data['y'][names]).any():
             data['y'][names] = data['y'][names].interpolate(limit_direction='both')
-            print("WARN: NaN in data column %s detected using interpolation", names)
+            print("WARN: NaN in data column %s detected using interpolation" % names)
 
     # ==============================================================================
     # Removing NaN/Inf
@@ -385,15 +317,13 @@ def loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, name, method, tr
     # Input
     # ------------------------------------------
     for names in data['X']:
-        data['X'][names] = data['X'][names].fillna(0)
-        data['X'][names].replace([np.inf, -np.inf], 0, inplace=True)
+        data['X'][names] = data['X'][names].replace([np.inf, -np.inf], 0).fillna(0)
 
     # ------------------------------------------
     # Output
     # ------------------------------------------
     for names in data['y']:
-        data['y'][names] = data['y'][names].fillna(0)
-        data['y'][names].replace([np.inf, -np.inf], 0, inplace=True)
+        data['y'][names] = data['y'][names].replace([np.inf, -np.inf], 0).fillna(0)
 
     # ==============================================================================
     # Normalisation Values

@@ -1,0 +1,1572 @@
+{
+ "Exp": [
+  {
+   "cat": "Names",
+   "var": "name",
+   "name": "Simulation name",
+   "desc": "Name of the simulation; the model is stored as mdl/mdl_<model>_<name>.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "Test"
+  },
+  {
+   "cat": "General",
+   "var": "sim",
+   "name": "Operating mode",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "simulation (train and/or test)",
+    "1": "hyperparameter optimisation",
+    "2": "grid optimisation"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "General",
+   "var": "gpu",
+   "name": "Device",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "CPU",
+    "1": "GPU"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "General",
+   "var": "warn",
+   "name": "Library messages",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "all messages",
+    "1": "no INFO",
+    "2": "no INFO and WARN",
+    "3": "none"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 3
+  },
+  {
+   "cat": "General",
+   "var": "seed",
+   "name": "Random seed",
+   "desc": "Seed of the weight initialisation (default 42)",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 42
+  },
+  {
+   "cat": "General",
+   "var": "ensemble",
+   "name": "Ensemble size",
+   "desc": "Number of networks trained with the seeds seed, seed+1, ... (DL, CL); the test uses their mean prediction",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Training/Testing",
+   "var": "method",
+   "name": "Data split",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "1-fold with data split",
+    "1": "k-fold cross validation",
+    "2": "transfer (separate datasets)",
+    "3": "ID based"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 2
+  },
+  {
+   "cat": "Training/Testing",
+   "var": "trainBatch",
+   "name": "Training batches",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "all data at once",
+    "1": "fixed batch size (Data › batch)",
+    "2": "one batch per ID"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Training/Testing",
+   "var": "kfold",
+   "name": "Number of folds",
+   "desc": "Number of folds of the k-fold cross validation (data split 1).",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 10
+  },
+  {
+   "cat": "Training/Testing",
+   "var": "train",
+   "name": "Training",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no training (load the stored model)",
+    "1": "train a new model (or retrain)"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Training/Testing",
+   "var": "test",
+   "name": "Testing",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no testing",
+    "1": "testing"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Output Control",
+   "var": "save",
+   "name": "Save results",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "results are not saved",
+    "1": "results are saved"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Output Control",
+   "var": "log",
+   "name": "TensorBoard log",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no logging",
+    "1": "TensorBoard log of the training in ./logs"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Output Control",
+   "var": "plot",
+   "name": "Plots",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no plotting",
+    "1": "plotting"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  }
+ ],
+ "Dat": [
+  {
+   "cat": "General",
+   "var": "type",
+   "name": "File type",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "xlsx": "Excel workbook",
+    "mat": "MATLAB file"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "xlsx"
+  },
+  {
+   "cat": "General",
+   "var": "batch",
+   "name": "Batch size of the data",
+   "desc": "Number of samples fed at once to training (Training batches = 1).",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 100000
+  },
+  {
+   "cat": "General",
+   "var": "Shuffle",
+   "name": "Shuffling",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "False": "no shuffling",
+    "True": "shuffle samples when splitting",
+    "ID": "shuffle the IDs (blocks)"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "False"
+  },
+  {
+   "cat": "General",
+   "var": "rT",
+   "name": "Training share",
+   "desc": "Share of the data used for training (0 … 1), the rest for testing.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.9
+  },
+  {
+   "cat": "General",
+   "var": "rV",
+   "name": "Validation share",
+   "desc": "Share of the training data held out for validation (0 … 1), not used for training.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.2
+  },
+  {
+   "cat": "General",
+   "var": "idT",
+   "name": "Test IDs",
+   "desc": "IDs used for testing (data split 3), comma separated.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": true,
+   "default": 2
+  },
+  {
+   "cat": "General",
+   "var": "idV",
+   "name": "Validation IDs",
+   "desc": "IDs whose last share rV is used for validation (data split 3), comma separated; if empty or test IDs, the last share rV of every training ID is used.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": true,
+   "default": 2
+  },
+  {
+   "cat": "Datasets",
+   "var": "train",
+   "name": "Training datasets",
+   "desc": "Names of the training datasets in data/ (without extension), comma separated.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "dataTest_1, dataTest_2"
+  },
+  {
+   "cat": "Datasets",
+   "var": "test",
+   "name": "Test dataset",
+   "desc": "Name of the test dataset in data/ (transfer, data split 2).",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "dataTest_3"
+  },
+  {
+   "cat": "Datasets",
+   "var": "val",
+   "name": "Validation dataset",
+   "desc": "Name of the validation dataset in data/ (transfer, data split 2).",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "dataTest_4"
+  },
+  {
+   "cat": "Input/ Output Mapping",
+   "var": "inp",
+   "name": "Inputs (X)",
+   "desc": "Names of the input channels, comma separated; empty: all inputs.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": true,
+   "default": null
+  },
+  {
+   "cat": "Input/ Output Mapping",
+   "var": "out",
+   "name": "Outputs (y)",
+   "desc": "Names of the output channels that are predicted, comma separated.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "Solar, Wind"
+  },
+  {
+   "cat": "Input/ Output Mapping",
+   "var": "his",
+   "name": "Historic exogenous inputs",
+   "desc": "Historic exogenous inputs of the short-term forecast (SF).",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": true,
+   "default": null
+  },
+  {
+   "cat": "Input/ Output Mapping",
+   "var": "fut",
+   "name": "Future exogenous inputs",
+   "desc": "Future exogenous inputs of the short-term forecast (SF).",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": true,
+   "default": null
+  },
+  {
+   "cat": "Sampling",
+   "var": "fs",
+   "name": "Sampling frequency",
+   "desc": "Sampling frequency of the data.",
+   "unit": "Hz",
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.001111111111111111
+  },
+  {
+   "cat": "Sampling",
+   "var": "resample",
+   "name": "Resampling",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "hold": "last sample (zero-order hold)",
+    "mean": "mean over each new sample interval"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "hold"
+  },
+  {
+   "cat": "Sampling",
+   "var": "lim",
+   "name": "Sample limit",
+   "desc": "0: data are not limited, x: only the first x samples are used.",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "weightNorm",
+   "name": "Normalisation scope",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "separate per input/output channel",
+    "1": "weighted (common)"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "inpNorm",
+   "name": "Input normalisation",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "-1 … +1",
+    "2": "0 … 1",
+    "3": "mean / standard deviation"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 3
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "outNorm",
+   "name": "Output normalisation",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "-1 … +1",
+    "2": "0 … 1",
+    "3": "mean / standard deviation"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 2
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "inpNoise",
+   "name": "Input noise",
+   "desc": "Gaussian noise added to the inputs (0: none).",
+   "unit": "%",
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "outNoise",
+   "name": "Output noise",
+   "desc": "Gaussian noise added to the outputs (0: none).",
+   "unit": "%",
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "inpFil",
+   "name": "Input filter",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "median filter"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "outFil",
+   "name": "Output filter",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "median filter"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "inpFilLen",
+   "name": "Input filter length",
+   "desc": "Length of the median filter of the inputs.",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 61
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "outFilLen",
+   "name": "Output filter length",
+   "desc": "Length of the median filter of the outputs.",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 61
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "threshold",
+   "name": "On/off threshold",
+   "desc": "Threshold that turns the regression output into on/off states (ACC, F1); 0: no threshold.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 500
+  },
+  {
+   "cat": "Pre-processing",
+   "var": "balance",
+   "name": "Class balancing",
+   "desc": "0: none, 1: balance the classes, x > 1: balance x bins of the output, -1: balancing function.",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  }
+ ],
+ "Par": [
+  {
+   "cat": "Solver",
+   "var": "method",
+   "name": "Task",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "regression",
+    "1": "classification"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Solver",
+   "var": "solver",
+   "name": "Solver",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "SP": "signal processing",
+    "ML": "machine learning",
+    "DL": "deep learning",
+    "SF": "short-term forecasting",
+    "CL": "closed loop"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "DL"
+  },
+  {
+   "cat": "Solver",
+   "var": "model",
+   "name": "Model",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "DNN": "dense network",
+    "CNN": "convolutional network",
+    "LSTM": "long short-term memory",
+    "TRAN": "transformer",
+    "DAE": "denoising autoencoder",
+    "INF": "informer-type attention",
+    "TFS": "time/frequency/statistics fusion",
+    "RF": "random forest",
+    "KNN": "k-nearest neighbours",
+    "SVM": "support vector machine",
+    "SS": "state space",
+    "TF": "transfer function",
+    "NHITS": "N-HiTS",
+    "NBEATS": "N-BEATS"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "DNN"
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "lag",
+   "name": "Lag",
+   "desc": "Lag between input (X) and output (y).",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "ahead",
+   "name": "Forecast horizon",
+   "desc": "Number of samples predicted ahead (SF).",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 24
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "frame",
+   "name": "Framing",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no framing (sample by sample)",
+    "1": "framing (sliding windows)"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "feat",
+   "name": "Features",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "raw values",
+    "1": "statistical features per frame",
+    "2": "rolled features per input",
+    "3": "rolled and frame features"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "init",
+   "name": "Initial values",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "add the initial values of y as inputs"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "window",
+   "name": "Window length",
+   "desc": "Length of one input window.",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 96
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "overlap",
+   "name": "Overlap",
+   "desc": "Overlap of consecutive windows (-1: no overlap during testing).",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 95
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "outseq",
+   "name": "Output sequence",
+   "desc": "0: seq2point (one output per window), x: length of the predicted sub-sequence (seq2seq).",
+   "unit": "samples",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "yFocus",
+   "name": "Focus point",
+   "desc": "Sample of the window that is predicted in seq2point (-1: average).",
+   "unit": "sample",
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 95
+  },
+  {
+   "cat": "Framing and Features",
+   "var": "nDim",
+   "name": "Input dimension",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "2": "flattened window (samples × features)",
+    "3": "window (samples × time × features)"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 3
+  },
+  {
+   "cat": "Postprocessing",
+   "var": "rank",
+   "name": "Feature ranking",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "none",
+    "1": "feature ranking",
+    "2": "input-output ranking",
+    "3": "input-input ranking"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Postprocessing",
+   "var": "outMin",
+   "name": "Output minimum",
+   "desc": "Lower limit of the predicted values.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": -1000000000
+  },
+  {
+   "cat": "Postprocessing",
+   "var": "outMax",
+   "name": "Output maximum",
+   "desc": "Upper limit of the predicted values.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 1000000000
+  }
+ ],
+ "Mdl": [
+  {
+   "cat": "Hyperparameters",
+   "var": "batch",
+   "name": "Batch size",
+   "desc": "Number of windows per gradient step (training and testing).",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 1000
+  },
+  {
+   "cat": "Hyperparameters",
+   "var": "epoch",
+   "name": "Epochs",
+   "desc": "Maximum number of passes over the training data.",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 100
+  },
+  {
+   "cat": "Hyperparameters",
+   "var": "patience",
+   "name": "Patience",
+   "desc": "Epochs without improvement of the validation loss before training stops (learning rate halves after patience/2).",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 15
+  },
+  {
+   "cat": "Hyperparameters",
+   "var": "valsteps",
+   "name": "Validation steps",
+   "desc": "Number of validation batches per epoch.",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 50
+  },
+  {
+   "cat": "Hyperparameters",
+   "var": "shuffle",
+   "name": "Shuffle batches",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "False": "keep the order",
+    "True": "shuffle before every epoch"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "True"
+  },
+  {
+   "cat": "Hyperparameters",
+   "var": "verbose",
+   "name": "Training output",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "silent",
+    "1": "progress bar",
+    "2": "one line per epoch"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 2
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "loss",
+   "name": "Loss function",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "mae": "mean absolute error",
+    "mse": "mean squared error",
+    "BinaryCrossentropy": "binary cross entropy",
+    "KLDivergence": "Kullback-Leibler"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "mae"
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "metric",
+   "name": "Metric",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "mae": "mean absolute error",
+    "mse": "mean squared error",
+    "accuracy": "accuracy"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "mse"
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "opt",
+   "name": "Optimiser",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "Adam": "Adam",
+    "RMSprop": "RMSprop",
+    "SGD": "stochastic gradient descent"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "Adam"
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "lr",
+   "name": "Learning rate",
+   "desc": "Step size of the optimiser.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.001
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "beta1",
+   "name": "β1 (Adam)",
+   "desc": "Decay of the first moment (mean of the gradients).",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.9
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "beta2",
+   "name": "β2 (Adam)",
+   "desc": "Decay of the second moment (squared gradients).",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.999
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "eps",
+   "name": "ε",
+   "desc": "Small constant for numerical stability.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 1e-08
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "rho",
+   "name": "ρ (RMSprop)",
+   "desc": "Discounting factor of the gradient history.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.9
+  },
+  {
+   "cat": "Solver Parameters",
+   "var": "mom",
+   "name": "Momentum",
+   "desc": "Momentum of RMSprop and SGD.",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "SS",
+   "var": "SP_SS_block",
+   "name": "SP_SS_block",
+   "desc": "number of block rows to use in the block Hankel matrices",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 10
+  },
+  {
+   "cat": "SS",
+   "var": "SP_SS_order",
+   "name": "SP_SS_order",
+   "desc": "state space model order",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 3
+  },
+  {
+   "cat": "TF",
+   "var": "SP_TF_poles",
+   "name": "SP_TF_poles",
+   "desc": "number of poles",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 4
+  },
+  {
+   "cat": "TF",
+   "var": "SP_TF_zeros",
+   "name": "SP_TF_zeros",
+   "desc": "number of zeros",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 3
+  },
+  {
+   "cat": "TF",
+   "var": "SP_TF_method",
+   "name": "TF estimation",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "fft": "FFT based",
+    "h2": "H2 norm"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "fft"
+  },
+  {
+   "cat": "TF",
+   "var": "SP_TF_l1",
+   "name": "SP_TF_l1",
+   "desc": "L1 regularisation",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.1
+  },
+  {
+   "cat": "RF",
+   "var": "SK_RF_depth",
+   "name": "SK_RF_depth",
+   "desc": "maximum depth of the tree",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 5
+  },
+  {
+   "cat": "RF",
+   "var": "SK_RF_state",
+   "name": "SK_RF_state",
+   "desc": "number of states",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "RF",
+   "var": "SK_RF_estimators",
+   "name": "SK_RF_estimators",
+   "desc": "number of trees in the forest",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 16
+  },
+  {
+   "cat": "SVM",
+   "var": "SK_SVM_kernel",
+   "name": "SVM kernel",
+   "desc": "",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": {
+    "linear": "linear",
+    "poly": "polynomial",
+    "rbf": "radial basis",
+    "sigmoid": "sigmoid"
+   },
+   "nested": false,
+   "optional": false,
+   "default": "rbf"
+  },
+  {
+   "cat": "SVM",
+   "var": "SK_SVM_C",
+   "name": "SK_SVM_C",
+   "desc": "regularization",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 100
+  },
+  {
+   "cat": "SVM",
+   "var": "SK_SVM_gamma",
+   "name": "SK_SVM_gamma",
+   "desc": "kernel coefficient: 'scale' = 1/(number of features * variance), or a number",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "scale"
+  },
+  {
+   "cat": "SVM",
+   "var": "SK_SVM_epsilon",
+   "name": "SK_SVM_epsilon",
+   "desc": "SK_SVM_epsilon",
+   "unit": null,
+   "type": "float",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0.1
+  },
+  {
+   "cat": "KNN",
+   "var": "SK_KNN_neighbors",
+   "name": "SK_KNN_neighbors",
+   "desc": "number of neighbors",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 5
+  },
+  {
+   "cat": "Short Term Time-Series Forecasting (SF) Models",
+   "var": "SF_Freq",
+   "name": "Data frequency",
+   "desc": "Pandas offset alias of the data (e.g. H, 15min) for the forecasting models.",
+   "unit": null,
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": "H"
+  },
+  {
+   "cat": "Features (input based)",
+   "var": "feat_roll.EWMA",
+   "name": "EWMA spans",
+   "desc": "Spans of the exponentially weighted moving averages (0: none), comma separated.",
+   "unit": "samples",
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Features (input based)",
+   "var": "feat_roll.EWMS",
+   "name": "EWMS spans",
+   "desc": "Spans of the exponentially weighted moving standard deviations (0: none), comma separated.",
+   "unit": "samples",
+   "type": "str",
+   "percent": false,
+   "options": null,
+   "nested": false,
+   "optional": false,
+   "default": 0
+  },
+  {
+   "cat": "Features (input based)",
+   "var": "feat_roll.diff",
+   "name": "Differences",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "no",
+    "1": "add the first difference of every input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Mean",
+   "name": "Mean feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "mean of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Std",
+   "name": "Std feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "standard deviation of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.RMS",
+   "name": "RMS feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "RMS value of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Peak2Rms",
+   "name": "Peak2Rms feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "crest factor (peak / RMS) of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Median",
+   "name": "Median feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "median of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Min",
+   "name": "Min feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "minimum of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Max",
+   "name": "Max feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "maximum of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Per25",
+   "name": "Per25 feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "25th percentile of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Per75",
+   "name": "Per75 feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "75th percentile of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Energy",
+   "name": "Energy feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "energy (sum of squares) of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Var",
+   "name": "Var feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "variance of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.Range",
+   "name": "Range feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "range (max − min) of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.3rdMoment",
+   "name": "3rdMoment feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "skewness (3rd moment) of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.4thMoment",
+   "name": "4thMoment feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "kurtosis (4th moment) of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  },
+  {
+   "cat": "Features (frame based)",
+   "var": "feat.fft",
+   "name": "fft feature",
+   "desc": "",
+   "unit": null,
+   "type": "int",
+   "percent": false,
+   "options": {
+    "0": "off",
+    "1": "FFT magnitudes of every window and input"
+   },
+   "nested": false,
+   "optional": false,
+   "default": 1
+  }
+ ]
+}

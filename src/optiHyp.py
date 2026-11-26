@@ -56,13 +56,15 @@ def optiHyp(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # ==============================================================================
     # Parameters
     # ==============================================================================
-    method = 2
+    method = setupExp['method']                                                                                          # same split as the simulation, validation never test data
+    fold = 1 if method == 1 else []
     setupExp['log'] = 1
 
     # ==============================================================================
     # Variables
     # ==============================================================================
     nameTrain = setupDat['train'][0]
+    nameVal = setupDat['val'] if method == 2 else nameTrain
     data = {}
     dataTrain = {'T': {}, 'V': {}}
 
@@ -79,8 +81,9 @@ def optiHyp(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # ==============================================================================
     # Calc
     # ==============================================================================
-    [data['T'], setupDat] = loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, nameTrain, method, 1, [])
-    [data['V'], _] = loadData(setupExp, copy.deepcopy(setupDat), setupPar, setupMdl, setupPath, nameTrain, method, 2, [])
+    [data['T'], setupDat] = loadData(setupExp, setupDat, setupPar, setupMdl, setupPath, nameTrain, method, 1, fold)
+    [data['V'], _] = loadData(setupExp, copy.deepcopy(setupDat), setupPar, setupMdl, setupPath, nameVal, method,
+                              1 if method == 2 else 3, fold)
 
     ###################################################################################################################
     # Pre-Processing
@@ -95,8 +98,8 @@ def optiHyp(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # ==============================================================================
     # Calc
     # ==============================================================================
-    [data['T'], _, _] = preprocess(data['T'], setupDat, setupPar)
-    [data['V'], _, _] = preprocess(data['V'], setupDat, setupPar)
+    [data['T'], _, idsT] = preprocess(data['T'], setupDat, setupPar)
+    [data['V'], _, idsV] = preprocess(data['V'], setupDat, setupPar)
 
     ###################################################################################################################
     # Framing
@@ -112,10 +115,10 @@ def optiHyp(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Calc
     # ==============================================================================
     if setupPar['frame'] == 1:
-        dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'])
-        dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'])
-        dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'])
-        dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'])
+        dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'], idsT)
+        dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'], idsT)
+        dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'], idsV)
+        dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'], idsV)
     else:
         dataTrain['T']['X'] = data['T']['X'].values
         dataTrain['T']['y'] = data['T']['y'].values

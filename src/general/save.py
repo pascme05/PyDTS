@@ -23,7 +23,7 @@
 import os
 import sys
 import csv
-import time
+import contextlib
 import numpy as np
 from datetime import datetime
 from pathlib import Path
@@ -56,56 +56,46 @@ def save(YTest, YPred, resultsApp, resultsAvg, setupDat, setupPar, setupExp, set
             org_string = setupExp['nameInit']
         split_string = org_string.split("kfold", 1)
         dir_name = split_string[0] + 'kfold' + str(setupDat['fold'])
-        path = setupPath['resPath'] + '\\' + dir_name
     else:
         if setupExp['sim'] == 0:
             dir_name = setupExp['name']
         else:
             dir_name = setupExp['nameInit']
-        path = setupPath['resPath'] + '\\' + dir_name
+    path = os.path.join(setupPath['resPath'], dir_name)
     Path(path).mkdir(parents=True, exist_ok=True)
 
     ####################################################################################################################
     # Save Setup
     ####################################################################################################################
     if setupExp['sim'] == 0:
-        setup_name = 'setup_' + dir_name + '.txt'
-        os.chdir(path)
-        with open(setup_name, 'w') as file:
-            file.write(json.dumps(setupExp))
+        setup = {'Exp': setupExp, 'Par': setupPar,
+                 'Dat': {k: v for k, v in setupDat.items() if not k.startswith(('norm', 'inp', 'out', 'Ts_', 'fs_'))
+                         or k in ('inp', 'out', 'inpNorm', 'outNorm', 'inpFil', 'outFil', 'inpFilLen', 'outFilLen',
+                                  'inpNoise', 'outNoise')}}
+        with open(os.path.join(path, 'setup_' + dir_name + '.txt'), 'w') as file:
+            file.write(json.dumps(setup, indent=2, default=str))
 
     ####################################################################################################################
     # Output
     ####################################################################################################################
     if setupExp['sim'] == 0:
-        resultName = 'result_' + setupExp['name'] + '_' + dt_string + '.txt'
-        temp = sys.stdout
-        sys.stdout = open(resultName, "w")
-        printResults(resultsApp, resultsAvg, setupDat)
-        sys.stdout.close()
-        sys.stdout = temp
+        resultName = os.path.join(path, 'result_' + setupExp['name'] + '_' + dt_string + '.txt')
+        with open(resultName, "w") as file, contextlib.redirect_stdout(file):
+            printResults(resultsApp, resultsAvg, setupDat)
     elif setupExp['sim'] == 2:
-        resultName = 'result_Grid_Perf_' + setupExp['nameInit'] + '.csv'
-        resultName2 = 'result_Grid_Time_' + setupExp['nameInit'] + '.csv'
-        os.chdir(path)
+        resultName = os.path.join(path, 'result_Grid_Perf_' + setupExp['nameInit'] + '.csv')
         with open(resultName, 'a+', newline='') as f1:
             writer = csv.writer(f1, delimiter='\t', lineterminator='\n', )
             if int(setupPar['optACC']) == 9:
-                writer.writerow(resultsAvg)
+                writer.writerow([setupPar['window'], setupDat['fs']] + list(resultsAvg))
             else:
-                writer.writerow([resultsAvg[int(setupPar['optACC'])]])
-        with open(resultName2, 'a+', newline='') as f1:
-            writer = csv.writer(f1, delimiter='\t', lineterminator='\n', )
-            excTime = time.time() - 0
-            writer.writerow([excTime])
+                writer.writerow([setupPar['window'], setupDat['fs'], resultsAvg[int(setupPar['optACC'])]])
 
     ####################################################################################################################
     # Saving results
     ####################################################################################################################
     if setupExp['sim'] == 0:
-        grtName = 'grt_' + setupExp['name'] + '_' + dt_string + '.csv'
-        prdName = 'prd_' + setupExp['name'] + '_' + dt_string + '.csv'
+        grtName = os.path.join(path, 'grt_' + setupExp['name'] + '_' + dt_string + '.csv')
+        prdName = os.path.join(path, 'prd_' + setupExp['name'] + '_' + dt_string + '.csv')
         np.savetxt(grtName, YTest, delimiter=',')
         np.savetxt(prdName, YPred, delimiter=',')
-
-    os.chdir(setupPath['basePath'])

@@ -50,6 +50,7 @@ def postprocess(data, dataPred, setupPar, setupDat):
 
         # Multiple Outputs
         else:
+            data['y'] = data['y'].reshape((data['y'].shape[0] * data['y'].shape[1], data['y'].shape[2]))
             dataPred['y'] = dataPred['y'].reshape((dataPred['y'].shape[0] * dataPred['y'].shape[1], dataPred['y'].shape[2]))
 
     # ------------------------------------------
@@ -70,9 +71,15 @@ def postprocess(data, dataPred, setupPar, setupDat):
     # ==============================================================================
     # Forecasting
     # ==============================================================================
-    if setupPar['lag'] != 0:
-        data['y'][-abs(setupPar['lag']):] = data['y'][-abs(setupPar['lag'])]
-        dataPred['y'][-abs(setupPar['lag']):] = dataPred['y'][-abs(setupPar['lag'])]
+    lag = int(setupPar['lag'])
+    if lag != 0 and setupPar['solver'] != 'CL' and abs(lag) < len(data['y']):
+        # samples without shifted target (filled with the edge value in preprocessing)
+        if lag < 0:
+            data['y'][lag:] = data['y'][lag - 1]
+            dataPred['y'][lag:] = dataPred['y'][lag - 1]
+        else:
+            data['y'][:lag] = data['y'][lag]
+            dataPred['y'][:lag] = dataPred['y'][lag]
 
     # ==============================================================================
     # Limiting

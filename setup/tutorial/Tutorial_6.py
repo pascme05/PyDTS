@@ -14,6 +14,17 @@
 # Import external libs
 #######################################################################################################################
 # ==============================================================================
+# Root Path (allows starting the script directly from its own folder)
+# ==============================================================================
+import os
+import sys
+
+rootPath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if rootPath not in sys.path:
+    sys.path.insert(0, rootPath)
+os.chdir(rootPath)
+
+# ==============================================================================
 # Internal
 # ==============================================================================
 from src.main import main
@@ -61,6 +72,7 @@ setupExp['author'] = 'Pascal Schirmer'                                          
 setupExp['sim'] = 0                                                                                                     # 0) simulation, 1) optimisation hyperparameters, 2) optimising grid
 setupExp['gpu'] = 0                                                                                                     # 0) cpu, 1) gpu
 setupExp['warn'] = 3                                                                                                    # 0) all msg are logged, 1) INFO not logged, 2) INFO and WARN not logged, 3) disabled
+setupExp['seed'] = 7                                                                                                    # random seed of the weight initialisation (results of a training run depend on it)
 
 # ------------------------------------------
 # Training/Testing
@@ -88,9 +100,9 @@ setupDat['type'] = 'mat'                                                        
 setupDat['batch'] = 100000                                                                                              # number of samples fed at once to training
 setupDat['Shuffle'] = False                                                                                             # False: no shuffling, True: shuffling data when splitting
 setupDat['rT'] = 0.9                                                                                                    # training proportion (0, 1)
-setupDat['rV'] = 0.2                                                                                                    # validation proportion (0, 1) as percentage from training proportion
+setupDat['rV'] = 0.2                                                                                                    # validation proportion (0, 1) of the training proportion, held out from training
 setupDat['idT'] = [36, 37, 39]                                                                                          # list of testing ids for method 3)
-setupDat['idV'] = [33, 34, 35]                                                                                          # list of validation ids for method 3)
+setupDat['idV'] = [33, 34, 35]                                                                                          # list of validation ids for method 3): their last rV is validation (if empty or equal to idT: last rV of every training id)
 
 # ------------------------------------------
 # Datasets

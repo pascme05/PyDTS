@@ -16,6 +16,7 @@
 # ==============================================================================
 # Internal
 # ==============================================================================
+from src.general.helpFnc import mdlSize
 
 # ==============================================================================
 # External
@@ -127,4 +128,4 @@ def trainMdlSP(data, t, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     print("INFO: Total training time (sec): %.2f" % trainTime)
     print("INFO: Training time per sample (ms): %.2f" % (trainTime/data['T']['X'].shape[0]*1000))
-    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
+    print("INFO: Model size (kB): %.2f" % mdlSize(mdl))

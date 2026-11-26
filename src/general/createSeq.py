@@ -44,8 +44,8 @@ def createSeq(data, setupPar):
     ###################################################################################################################
     # Pre-Processing
     ###################################################################################################################
-    if sel > setupPar['window']:
-        sel = setupPar['window']
+    if sel > setupPar['window'] - 1:
+        sel = setupPar['window'] - 1
 
     ###################################################################################################################
     # Calculation
@@ -56,10 +56,10 @@ def createSeq(data, setupPar):
     if setupPar['outseq'] >= 1:
         if dim == 2:
             delta = int((setupPar['window'] - setupPar['outseq']) / 2)
-            data = np.squeeze(data[:, delta:setupPar['window'] - delta])
+            data = np.squeeze(data[:, delta:delta + setupPar['outseq']])
         else:
             delta = int((setupPar['window'] - setupPar['outseq']) / 2)
-            data = np.squeeze(data[:, delta:setupPar['window'] - delta, :])
+            data = np.squeeze(data[:, delta:delta + setupPar['outseq'], :])
 
     # ==============================================================================
     # Seq2point

@@ -19,7 +19,7 @@
 from src.data.resampleData import resampleData
 from src.data.normData import normData
 from src.data.filterData import filterData
-from src.general.helpFnc import addNoise
+from src.general.helpFnc import addNoise, shiftEdge
 from src.general.addInitValues import addInitValues
 
 # ==============================================================================
@@ -65,7 +65,7 @@ def preprocess(data, setupDat, setupPar):
     # ==============================================================================
     if setupPar['solver'] != 'CL':
         for names in data['y']:
-            data['y'][names] = np.roll(data['y'][names], setupPar['lag'])
+            data['y'][names] = shiftEdge(data['y'][names].values, setupPar['lag'], idY.values)
 
     # ==============================================================================
     # Filtering
@@ -109,9 +109,9 @@ def preprocess(data, setupDat, setupPar):
     # Sanity Check
     # ==============================================================================
     timeX = timeX[0:min(timeX.shape[0], timeY.shape[0])]
-    timeY = timeX[0:min(timeX.shape[0], timeY.shape[0])]
+    timeY = timeY[0:min(timeX.shape[0], timeY.shape[0])]
     idX = idX[0:min(idX.shape[0], idY.shape[0])]
-    idY = idX[0:min(idX.shape[0], idY.shape[0])]
+    idY = idY[0:min(idX.shape[0], idY.shape[0])]
     data['X'] = data['X'][0:min(data['y'].shape[0], data['X'].shape[0])]
     data['y'] = data['y'][0:min(data['y'].shape[0], data['X'].shape[0])]
 

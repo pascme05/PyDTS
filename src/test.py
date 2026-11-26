@@ -18,7 +18,7 @@
 # ==============================================================================
 from src.preprocess import preprocess
 from src.postprocess import postprocess
-from src.general.framing import framing
+from src.general.framing import framing, frameIds
 from src.general.features import features
 from src.general.createSeq import createSeq
 from src.model.testMdlDL import testMdlDL
@@ -33,10 +33,85 @@ from src.general.save import save
 from src.general.featureRank import featureRank
 from src.general.adaptDim import adaptDim
 from src.data.summaryData import summaryData
+from src.general.performance import performance as _performance                                                       # members (not recorded by the GUI)
 
 # ==============================================================================
 # External
 # ==============================================================================
+import contextlib
+import io
+import numpy as np
+
+
+#######################################################################################################################
+# Helper
+#######################################################################################################################
+def checkRange(X, setupDat):
+    """
+    Warns when test inputs lie outside the range of the training data (training and validation rows, the
+    normalisation pool): the network then has to extrapolate and its error can grow strongly. Prints the share of
+    samples outside the range per input and per test ID.
+    """
+    cols = [c for c in X.columns if c not in ('time', 'id')]
+    lo, hi = np.asarray(setupDat['normMinX'], float), np.asarray(setupDat['normMaxX'], float)
+    if len(cols) != len(lo):
+        return
+    v = X[cols].values.astype(float)
+    tol = 0.02 * np.maximum(hi - lo, 1e-12)                                                                             # 2 % of the range
+    out = (v < lo - tol) | (v > hi + tol)
+    if not out.any():
+        print("INFO: All test inputs within the range of the training data")
+        return
+    ids = X['id'].values if 'id' in X.columns else np.zeros(len(X))
+    for j in np.flatnonzero(out.any(axis=0)):
+        per = ', '.join("ID %g: %.0f %%" % (i, 100 * out[ids == i, j].mean()) for i in np.unique(ids)
+                        if out[ids == i, j].any())
+        print("WARN: Input %s outside the training range [%.4g, %.4g] (test %.4g .. %.4g) - %s of the samples; "
+              "the model extrapolates there" % (cols[j], lo[j], hi[j], np.nanmin(v[:, j]), np.nanmax(v[:, j]), per))
+
+
+def ensemble(fn, dataTest, setupDat, setupPar, setupMdl, setupExp):
+    """
+    Prediction of a seed ensemble (setupExp['ensemble'] = N): every member (model.pt, model_2.pt, ...) predicts the
+    test data and the prediction is the mean of the members. Returns the (reshaped) test data, the mean prediction and
+    the member predictions (empty for a single model).
+    """
+    n = max(1, int(setupExp.get('ensemble', 1)))
+    runs = []
+    for k in range(n):
+        d = {key: dict(v) for key, v in dataTest.items()}                                                               # models replace arrays
+        runs.append((d, fn(d, setupDat, setupPar, setupMdl, dict(setupExp, member=k))))
+    if n == 1:
+        return [runs[0][0], runs[0][1], []]
+    print("INFO: Prediction is the mean of %d ensemble members" % n)
+    members = [np.array(p['T']['y'], copy=True) for _, p in runs]
+    pred = runs[0][1]
+    pred['T']['y'] = np.mean(members, axis=0)
+
+    return [runs[0][0], pred, members]
+
+
+def score(dataT, yPred, ndim, setupPar, setupDat):
+    """Average errors (as performance) of one ensemble member; the inputs are not needed, one window is passed."""
+    X = np.asarray(dataT['X'])[:1].reshape((1,) + tuple(ndim[1:]))
+    with contextlib.redirect_stdout(io.StringIO()):
+        [t, p] = postprocess({'X': X.copy(), 'y': np.array(dataT['y'], copy=True)},
+                             {'X': X.copy(), 'y': np.array(yPred, copy=True)}, setupPar, setupDat)
+        return _performance(p['y'], t['y'], p['L'], t['L'], setupDat)[1]
+
+
+def printMembers(scores, resultAvg):
+    """Errors of every ensemble member, their mean and spread, and the errors of the ensemble mean."""
+    if not scores:
+        return
+    s = np.array(scores, dtype=float)
+    print("INFO: Ensemble members (average over the outputs)")
+    for k, r in enumerate(s):
+        print("  member %d:  R2 %.4f  RMSE %.4g  MAE %.4g  MAX %.4g" % (k + 1, r[2], r[4], r[5], r[6]))
+    print("  members:   R2 %.4f +- %.4f  RMSE %.4g +- %.2g  MAE %.4g +- %.2g (mean +- standard deviation)"
+          % (s[:, 2].mean(), s[:, 2].std(), s[:, 4].mean(), s[:, 4].std(), s[:, 5].mean(), s[:, 5].std()))
+    print("  ensemble:  R2 %.4f  RMSE %.4g  MAE %.4g  MAX %.4g"
+          % (resultAvg[2], resultAvg[4], resultAvg[5], resultAvg[6]))
 
 
 #######################################################################################################################
@@ -54,6 +129,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     ###################################################################################################################
     dataTest = {'T': {}, 'V': {}}
     dataPred = {'T': {'X': [], 'y': []}}
+    members = []
 
     ###################################################################################################################
     # Pre-Processing
@@ -69,11 +145,12 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Data Summary
     # ==============================================================================
     summaryData(data['T']['X'], data['T']['y'], setupDat)
+    checkRange(data['T']['X'], setupDat)
 
     # ==============================================================================
     # Testing Data
     # ==============================================================================
-    [data['T'], t, _] = preprocess(data['T'], setupDat, setupPar)
+    [data['T'], t, idsT] = preprocess(data['T'], setupDat, setupPar)
 
     # ==============================================================================
     # Msg
@@ -95,15 +172,14 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # ==============================================================================
     if setupPar['frame'] == 1:
         if setupPar['overlap'] == -1:
-            dataTest['T']['X'] = framing(data['T']['X'], setupPar['window'], 0)
-            dataTest['T']['y'] = framing(data['T']['y'], setupPar['window'], 0)
+            ov = 0
+        elif setupPar['outseq'] == 0:
+            ov = setupPar['window'] - 1
         else:
-            if setupPar['outseq'] == 0:
-                dataTest['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['window'] - 1)
-                dataTest['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['window'] - 1)
-            else:
-                dataTest['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['window'] - setupPar['outseq'])
-                dataTest['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['window'] - setupPar['outseq'])
+            ov = setupPar['window'] - setupPar['outseq']
+        dataTest['T']['X'] = framing(data['T']['X'], setupPar['window'], ov, idsT)                                     # per ID
+        dataTest['T']['y'] = framing(data['T']['y'], setupPar['window'], ov, idsT)
+        dataTest['T']['id'] = frameIds(idsT, len(data['T']['y']), setupPar['window'], ov)                               # ID per frame (CL)
     else:
         dataTest['T']['X'] = data['T']['X'].values
         dataTest['T']['y'] = data['T']['y'].values
@@ -192,7 +268,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Deep Learning
     # ------------------------------------------
     elif setupPar['solver'] == 'DL':
-        dataPred = testMdlDL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+        [dataTest, dataPred, members] = ensemble(testMdlDL, dataTest, setupDat, setupPar, setupMdl, setupExp)
 
     # ------------------------------------------
     # Short-Time-Forecasting
@@ -204,7 +280,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Closed Loop Modeling
     # ------------------------------------------
     elif setupPar['solver'] == 'CL':
-        dataPred = testMdlCL(dataTest, setupDat, setupPar, setupMdl, setupExp)
+        [dataTest, dataPred, members] = ensemble(testMdlCL, dataTest, setupDat, setupPar, setupMdl, setupExp)
 
     # ==============================================================================
     # Msg
@@ -220,6 +296,11 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     print("------------------------------------------")
     print("START: Postprocessing")
     print("------------------------------------------")
+
+    # ==============================================================================
+    # Ensemble members (spread over the seeds)
+    # ==============================================================================
+    scores = [score(dataTest['T'], m, ndim, setupPar, setupDat) for m in members]
 
     # ==============================================================================
     # Unfold
@@ -268,6 +349,7 @@ def test(data, setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Console
     # ==============================================================================
     printResults(result, resultAvg, setupDat)
+    printMembers(scores, resultAvg)
 
     # ==============================================================================
     # Plotting

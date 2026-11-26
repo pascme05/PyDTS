@@ -21,6 +21,9 @@ from src.main import main
 # ==============================================================================
 # External
 # ==============================================================================
+import os
+import time
+import pandas as pd
 
 
 #######################################################################################################################
@@ -46,9 +49,10 @@ def optiGrid(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Initialisation
     ###################################################################################################################
     setupExp['nameInit'] = setupExp['name']
-    setupPar['optPara1'] = [300, 600, 900, 1200, 1500, 1800, 2100, 2400]
-    setupPar['optPara2'] = [0.5]
-    setupPar['optACC'] = 3                                                                                              # 0) ACC, 1) F1, 2) R2, 3) TECA, 4) RMSE, 5) MAE, 6) Max, 7) Pred 8) Grt 9) All
+    grid = []
+    setupPar.setdefault('optPara1', [300, 600, 900, 1200, 1500, 1800, 2100, 2400])                                     # window lengths (samples)
+    setupPar.setdefault('optPara2', [setupDat['fs']])                                                                  # sampling frequencies (Hz), default: the configured one
+    setupPar.setdefault('optACC', 3)                                                                                              # 0) ACC, 1) F1, 2) R2, 3) TECA, 4) RMSE, 5) MAE, 6) Max, 7) Pred 8) Grt 9) All
 
     ###################################################################################################################
     # Calculation
@@ -72,4 +76,24 @@ def optiGrid(setupExp, setupDat, setupPar, setupMdl, setupPath):
             # ==============================================================================
             # Calculation
             # ==============================================================================
-            main(setupExp, setupDat, setupPar, setupMdl, setupPath)
+            start = time.time()
+            [_, resultAvg] = main(setupExp, setupDat, setupPar, setupMdl, setupPath)
+            if resultAvg is not None:
+                grid.append([setupPar['window'], setupDat['fs'], time.time() - start] + list(resultAvg))
+
+    ###################################################################################################################
+    # Summary
+    ###################################################################################################################
+    setupExp['name'] = setupExp['nameInit']
+    if grid:
+        cols = ['window', 'fs', 'time', 'ACC', 'F1', 'R2', 'TECA', 'RMSE', 'MAE', 'MAX', 'EST', 'TRU']
+        res = pd.DataFrame(grid, columns=cols[:len(grid[0])])
+        acc = min(int(setupPar['optACC']), 8)
+        key = cols[3 + acc]
+        best = res[key].idxmin() if key in ('RMSE', 'MAE', 'MAX') else res[key].idxmax()
+        os.makedirs(setupPath['resPath'], exist_ok=True)
+        res.to_csv(os.path.join(setupPath['resPath'], 'result_Grid_' + setupExp['nameInit'] + '.csv'), index=False)
+        print(res.to_string(index=False))
+        print("INFO: Best grid point (%s): window %s, fs %s" % (key, res.loc[best, 'window'], res.loc[best, 'fs']))
+
+    return grid

@@ -16,6 +16,7 @@
 # ==============================================================================
 # Internal
 # ==============================================================================
+from src.general.helpFnc import mdlSize
 
 # ==============================================================================
 # External
@@ -24,6 +25,7 @@ import copy
 import joblib
 import numpy as np
 import time
+import sys
 from sys import getsizeof
 
 
@@ -66,8 +68,8 @@ def testMdlML(data, setupPar, setupExp):
     try:
         mdl = joblib.load(mdlName)
         print("INFO: Model loaded")
-    except:
-        print("ERROR: Model could not be loaded")
+    except Exception as e:
+        sys.exit("ERROR: Model %s could not be loaded, train it first (%s)" % (mdlName, e))
 
     ###################################################################################################################
     # Calculation
@@ -93,7 +95,7 @@ def testMdlML(data, setupPar, setupExp):
     ###################################################################################################################
     print("INFO: Total inference time (ms): %.2f" % (testTime * 1000))
     print("INFO: Inference time per sample (us): %.2f" % (testTime / data['T']['X'].shape[0] * 1000 * 1000))
-    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
+    print("INFO: Model size (kB): %.2f" % mdlSize(mdl))
 
     ###################################################################################################################
     # References

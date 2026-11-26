@@ -21,6 +21,7 @@
 # External
 # ==============================================================================
 import numpy as np
+import sys
 
 
 #######################################################################################################################
@@ -60,6 +61,12 @@ def normData(X, y, setupDat, inv):
     ###################################################################################################################
     # Calculation
     ###################################################################################################################
+    # constant channels: range or spread 0 -> 1 (no division by zero)
+    rngX = np.where(np.asarray(maxX) - np.asarray(minX) == 0, 1, np.asarray(maxX) - np.asarray(minX))
+    rngY = np.where(np.asarray(maxY) - np.asarray(minY) == 0, 1, np.asarray(maxY) - np.asarray(minY))
+    sigX = np.where(np.asarray(sigX) == 0, 1, sigX)
+    sigY = np.where(np.asarray(sigY) == 0, 1, sigY)
+
     # ==============================================================================
     # Input
     # ==============================================================================
@@ -69,18 +76,18 @@ def normData(X, y, setupDat, inv):
         # ------------------------------------------
         if setupDat['inpNorm'] == 1:
             if inv == 1:
-                X = X * (maxX - minX) + avgX
+                X = X * rngX + avgX
             else:
-                X = (X - avgX) / (maxX - minX)
+                X = (X - avgX) / rngX
 
         # ------------------------------------------
         # 0/1
         # ------------------------------------------
         elif setupDat['inpNorm'] == 2:
             if inv == 1:
-                X = X * (maxX - minX) + minX
+                X = X * rngX + minX
             else:
-                X = (X - minX) / (maxX - minX)
+                X = (X - minX) / rngX
 
         # ------------------------------------------
         # Avg/Sig
@@ -96,8 +103,10 @@ def normData(X, y, setupDat, inv):
         # ------------------------------------------
         else:
             X = X
-    except:
-        print("WARN: Input normalisation failed")
+    except Exception as e:
+        if inv == 0:
+            sys.exit("ERROR: Input normalisation failed (%s)" % e)
+        print("WARN: Inverse input normalisation failed (%s)" % e)
 
     # ==============================================================================
     # Output
@@ -108,18 +117,18 @@ def normData(X, y, setupDat, inv):
         # ------------------------------------------
         if setupDat['outNorm'] == 1:
             if inv == 1:
-                y = y * (maxY - minY) + avgY
+                y = y * rngY + avgY
             else:
-                y = (y - avgY) / (maxY - minY)
+                y = (y - avgY) / rngY
 
         # ------------------------------------------
         # 0/1
         # ------------------------------------------
         elif setupDat['outNorm'] == 2:
             if inv == 1:
-                y = y * (maxY - minY) + minY
+                y = y * rngY + minY
             else:
-                y = (y - minY) / (maxY - minY)
+                y = (y - minY) / rngY
 
         # ------------------------------------------
         # Avg/Sig
@@ -135,8 +144,8 @@ def normData(X, y, setupDat, inv):
         # ------------------------------------------
         else:
             y = y
-    except:
-        print("WARN: Output normalisation failed")
+    except Exception as e:
+        sys.exit("ERROR: Output normalisation failed (%s)" % e)
 
     ###################################################################################################################
     # Return

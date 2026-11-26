@@ -18,18 +18,80 @@ Furthermore, please also cite the corresponding publicly available datasets.
 
 
 # Dependencies
-The requirements of the PyPowerSim toolkit are summarized in the requirements.txt data file. In detail, the PyDTS
-Toolkit was implemented using the following dependencies:
-- Python 3.8
-- Tensorflow 2.5
-- Scikit-Lean 1.0 
-- Numpy 
-- Pandas
-- Scipy
+The requirements of the PyDTS toolkit are summarized in the requirements.txt data file. The current version is tested
+with the following dependencies:
+- Python 3.11
+- PyTorch 2.1 (CUDA 12.1 build for GPU training)
+- Optuna 4.4 (hyperparameter optimisation of the deep learning models)
+- NeuralForecast 1.7 (short-term forecasting, SF)
+- Scikit-Learn 1.5
+- Numpy 1.24
+- Pandas 2.2
+- Scipy 1.13
 
-Additionally, Python 3.11 with tensorflow 2.13 was tested. The requirements.txt file was updated for version 3.11, while
-the old requirements have been store using req38.txt. Furthermore, when changing back to Python 3.8 the optimizer must
-be changed from "tf.keras.optimizers.legacy.Adam" to "tf.keras.optimizers.Adam" (similarly for all other optimizers).
+requirements.txt pins the direct dependencies; requirements-lock.txt pins every package of a tested environment
+(including the GUI) and reproduces it exactly:
+
+```
+python -m venv venv
+venv\Scripts\python -m pip install -r requirements-lock.txt
+```
+
+The deep learning solvers (DL, CL, hyperparameter optimisation) use PyTorch; requirements.txt installs the CPU build.
+For training on an NVIDIA GPU install the CUDA build and set `setupExp['gpu'] = 1`:
+
+```
+venv\Scripts\python -m pip install torch==2.1.2 --index-url https://download.pytorch.org/whl/cu121
+```
+
+Models are stored as `mdl/mdl_<model>_<name>/model.pt` (weights and model description) together with
+`training_log.csv`. Versions up to 0.3 used TensorFlow/Keras (checkpoints `cp.ckpt`); these models cannot be loaded
+anymore and must be retrained. The original implementation used Python 3.8 with Tensorflow 2.5 (req38.txt).
+
+The data handling (split, normalisation, sequences, features) is checked by `python tests/test_core.py` (or
+`python -m pytest tests`).
+
+# Changes in Version 0.4
+Version 0.4 changes the deep learning framework and corrects the data handling. Models trained with version 0.3 cannot
+be loaded anymore, and its results are not comparable one to one with the results below; all pre-trained models under
+\mdl and all results in this README have been recalculated with version 0.4.
+
+| Area | Version 0.3 | Version 0.4 |
+|------|-------------|-------------|
+| Framework | TensorFlow/Keras, checkpoints `cp.ckpt` | PyTorch, `mdl/mdl_<model>_<name>/model.pt` + `training_log.csv`, GPU via `setupExp['gpu'] = 1` |
+| Hyperparameter search (DL) | Keras-Tuner | Optuna (TPE sampler, Hyperband pruning), validated on held-out data |
+| Validation data (methods 0, 1) | first share rV of the training data, also trained on | last share rV of the training data, not trained on |
+| Validation data (method 3, IDs) | validation IDs (idV) stayed in training; idV = idT validated on the test set | every non-test ID is trained on; validation is the last share rV of each idV ID (of every training ID if idV is empty or contains only test IDs) |
+| Shuffling | inputs and outputs shuffled independently (pairs broken) | one fixed permutation (seed 42) for inputs and outputs |
+| z-score (inpNorm/outNorm = 3) | divided by the variance | divided by the standard deviation; constant channels no longer divide by zero |
+| Stored model | every 5th epoch | epoch with the lowest validation loss |
+| Resampling (fs ≠ data rate) | one time grid from the first to the last sample; gaps between IDs (e.g. removed test IDs) were filled with held values, and the step was not exactly 1/fs | every ID is resampled on its own grid with step 1/fs |
+| Windows and lag (several IDs) | windows, the output lag and the closed-loop feedback ran across the boundary between two IDs | every ID is framed and shifted on its own; IDs shorter than one window are skipped with a warning |
+| Random seed | fixed seed, but GPU kernels and shuffle order not reproducible | `setupExp['seed']` seeds weights, dropout and shuffle order; deterministic GPU kernels, the same seed gives the same model on the same machine |
+| Seed ensemble | – | `setupExp['ensemble'] = N` trains N networks (seeds seed … seed+N-1, `model.pt`, `model_2.pt`, …); the test uses the mean prediction and prints every member, their mean ± standard deviation and the ensemble |
+| Extrapolation check | – | the test warns for every input outside the range of the training data, with the share of samples per test ID |
+| Resampling method | zero-order hold only | `setupDat['resample']`: 'hold' (default) or 'mean' (mean over each new sample interval, anti-aliasing when the rate is reduced) |
+| Retraining ML models | an existing `.joblib` model was loaded and refitted with its old settings (changed parameters were ignored) | always a new fit with the current settings; SVM gamma 'scale' instead of 0.1 |
+| Further fixes | | lag no longer wraps the series around, EWMA features restart per ID, output time/ID taken from the outputs, `SGD` optimiser selectable, balancing works, missing models/data stop with an error, closed-loop feedback uses the past output in training and testing |
+
+Consequences for the results: the validation data no longer leak into training and the z-score is a true
+standardisation, which removed a regularising effect of the old variance scaling. Some tutorials therefore score
+lower than in version 0.3 (see Tutorial Results); Tutorial 2 now uses a learning rate of 3e-5 and Tutorial 3 takes its
+validation data from the end of every training drive cycle (`idV = []`).
+
+# Graphical User Interface
+PyDTS has a local browser GUI (Streamlit) that edits all parameters of start.py and mdlPara.py, runs the toolkit
+unchanged, and shows the predictions and errors as interactive charts, together with theory pages on temperature
+prediction and neural networks. Install the GUI packages into the PyDTS environment and start it from the root
+folder:
+
+```
+pip install -r gui/requirements.txt
+python start_gui.py                      # opens http://localhost:8501
+```
+
+The user guide is docs/GUI.md (also shown in the GUI under Help › Documentation). After changing parameters in
+start.py or mdlPara.py, run `python gui/build_config.py` to update the forms and the tutorial configurations.
 
 # Datasets
 The toolkit utilizes the following publicly available datasets, which have been pre-processed and reshaped for the users'
@@ -54,7 +116,6 @@ Data templates can be found under \data.
 Since the toolkit is still under development there are several things that need to be improved, are not yet implemented 
 or lack verification. In the following a list of known issues and limitations is provided:
 - The transfer functions are not yet reviewed and have shown inconsistent behavior
-- The data balancing function is currently not working and must be revised
 - There are minor issues for displaying and formatting units
 
 
@@ -94,7 +155,8 @@ The toolkit offers three different operating modes. The operating modes can be c
 in the start.py file. The following three options are available. First, classical training and testing where a model is
 trained using a training and validation dataset, and tested on a testing dataset respectively. Second, hyperparameters
 optimization where free model parameters are optimally tuned using scikit GridSearchCV for machine learning models and
-keras hyper band tuner for deep learning models utilizing tensorboard. Third, general parameters can be optimized using
+Optuna search (TPE sampler with Hyperband pruning) for deep learning models; the best model and all trials are
+stored in mdl/mdl_opt_<model>_<name>/. Third, general parameters can be optimized using
 a 2D grid search available in 'optiGrid.py'.
 
 ## Models
@@ -126,13 +188,40 @@ results have been obtained using the default parameters of the toolkit.
 
 | Output     | SVM (ML) | KNN (ML) | RF (ML) | DNN (DL) | LSTM (DL)   | CNN (DL) |
 |------------|----------|----------|---------|----------|-------------|----------|
-| Solar (MW) | 2717.31  | 3092.78  | 725.93  | 996.56   | **685.31**  | 800.04   | 
-| Wind  (MW) | 2937.16  | 3603.52  | 2360.53 | 2096.60  | **1988.47** | 2006.85  | 
-| Avg (MW)   | 2827.24  | 3348.15  | 1543.23 | 1546.58  | **1336.89** | 1403.45  |
+| Solar (MW) | 1953     | 1316     | 726     | 625      | 586         | **532**  |
+| Wind  (MW) | 2711     | 3781     | 2361    | 1996     | 1892        | **1867** |
+| Avg (MW)   | 2332     | 2548     | 1543    | 1311     | 1239        | **1199** |
 
-As can be seen from the table above, DL approaches consistently equalize or outperform ML approaches for all
-architectures. Furthermore, it should be noted that the LSTM DL model shows the best results due to its ability to
-capture temporal information.
+As can be seen from the table above, the DL approaches outperform the ML approaches. The CNN and LSTM models, which
+both use the temporal information of the input window, give the lowest errors (the difference between them is within
+the spread of repeated training runs). The SVM uses the kernel coefficient gamma = 'scale' (1 / (number of features ×
+variance)); the former fixed value gamma = 0.1 was far too large for the 288 features of a window (96 samples × 3
+inputs) and gave an average MAE of 5787 MW.
+
+## Tutorial Results
+Test results of the tutorials (setup/tutorial, pre-trained models under \mdl, MAE in the unit of the output):
+
+| Tutorial | Model | R² (0.4) | R² (0.3) | MAE (0.4) |
+|----------|-------|----------|----------|-----------|
+| 1 Denoising | CNN | 0.77 | 0.78 | 0.11 A |
+| 2 Forecasting | DNN | 0.80 | 0.97 | 2237 W |
+| 3 Non-linear (motor temperature) | DNN | 0.90 | 0.91 | 2.20 K |
+| 3 with CNN (model = CNN) | CNN | 0.93 | 0.89 | 1.69 K |
+| 4 Anomaly detection | CNN | 0.54 (accuracy 87 %) | 0.73 | 0.13 |
+| 5 Degradation | LSTM | 0.98 | 0.985 | 0.015 Ah |
+| 6 Cross domain | LSTM | 0.98 | 0.89 | 2.80 A |
+| 7 Short-term forecasting | LSTM (SF) | 0.94 | 0.88 | 455 MW |
+| 8 Closed loop (motor temperature) | DNN (CL) | 0.997 | 0.987 | 1.15 K |
+
+Repeated training runs differ by a few hundredths in R², so small differences between the versions are not significant.
+The random seed is set with `setupExp['seed']` (default 42); with the same seed and settings a training run gives the
+same model on the same machine. Single networks can still depend strongly on the seed when the test data lie outside
+the training data. In Tutorial 6 the test drive ID 37 was recorded at an ambient temperature (T_a2 = -3.4 to -1.9 °C)
+below all training drives; the test warns about this ("Input T_a2 outside the training range ... ID 37: 100 % of the
+samples"). During the retraining for version 0.4 one network reached R² below 0 on it while others reached 0.98-0.99;
+the stored model uses seed 7. A seed ensemble removes this dependence: with `setupExp['ensemble'] = 5` (seeds 42-46)
+Tutorial 6 reaches R² 0.993 and MAE 1.81 A, the single members R² 0.991 ± 0.001 and MAE 2.12 ± 0.15 A (mean ±
+standard deviation), at five times the training time.
 
 ## Detailed Results
 The simulation output contains three different plots. The first one provides an analysis of the input features using
@@ -162,19 +251,23 @@ respective tasks.
 
 ## Energy Disaggregation
 For energy disaggregation we consider again the AMPDs2 dataset from Tutorial 1 and compare the results for a scenario of
-10-fold cross validation using the five most used appliances in the dataset, namely ‘DWE’, 'FRE', 'HPE', ‘WOE’, and
-'CDE'. CNN has been used as it was found to work best for the disaggregation task. The detailed setup files are the
-same as in the BaseNILM toolkit (https://github.com/pascme05/BaseNILM) and the numerical results are tabulated
-in Table 10.
+5-fold cross validation using the five most used appliances in the dataset, namely ‘DWE’, 'FRE', 'HPE', ‘WOE’, and
+'CDE'. CNN has been used as it was found to work best for the disaggregation task. The setup file is
+setup/journal/Journal_Denoise.py; the results below are the averages over the five folds (version 0.4). TECA is the
+total energy correctly assigned, $1 - \sum|\hat{y}-y| / (2\sum y)$; RMSE, MSE, MAE and MAX are the root mean square,
+mean square, mean absolute and maximum absolute error of the appliance current.
 
 | Device | TECA   | RMSE (A) | MSE (A^2) | MAE (A) | MAX (A) |
 |--------|--------|----------|-----------|---------|---------|
-| DWE    | 49.61% | 0.87     | 0.93      | 0.13    | 6.60    | 
-| FRE    | 97.52% | 0.11     | 0.33      | 0.06    | 2.96    | 
-| HPE    | 98.02% | 0.59     | 0.77      | 0.07    | 47.90   | 
-| WOE    | 93.83% | 0.44     | 0.66      | 0.02    | 29.89   | 
-| CDE    | 97.60% | 0.36     | 0.60      | 0.02    | 39.96   | 
-| Avg    | 87.31% | 0.47     | 0.69      | 0.06    | 25.46   |
+| DWE    | 49.90% | 0.87     | 0.76      | 0.124   | 6.76    |
+| FRE    | 94.90% | 0.25     | 0.06      | 0.140   | 3.50    |
+| HPE    | 97.04% | 0.71     | 0.51      | 0.087   | 71.54   |
+| WOE    | 89.02% | 0.69     | 0.55      | 0.040   | 30.85   |
+| CDE    | 97.65% | 0.66     | 0.46      | 0.022   | 41.49   |
+| Avg    | 85.70% | 0.64     | 0.47      | 0.082   | 30.83   |
+
+The dishwasher (DWE) is the hardest appliance (TECA 50 %): it runs rarely and its current overlaps with other
+appliances, while the large and regular loads (heat pump HPE, clothes dryer CDE) are assigned to 97 %.
 
 For the comparison with the literature three different devices have been considered namely 'HPE', ‘WOE’, and 'CDE', 
 the results are provided in the Table below.
@@ -185,38 +278,66 @@ the results are provided in the Table below.
 | [8]   | 2020 | GAN   | -      | 38.5     | -      |
 | [9]   | 2019 | LSTM  | -      | 38.6     | -      |
 | [10]  | 2018 | CNN   | -      | 63.4     | -      |
-| PyDTS | 2023 | CNN   | 91.22% | 44.7     | 2.32   |
+| PyDTS v0.3 | 2023 | CNN   | 91.22% | 44.7     | 2.32   |
+| PyDTS v0.4 | 2026 | CNN   | 94.57% | -        | -      |
+
+The v0.3 row was calculated with the BaseNILM setup in Watt. Version 0.4 evaluates the appliance currents (setup
+Journal_Denoise); for HPE, WOE and CDE the average RMSE is 0.69 A, which is not directly comparable to the RMSE in W of
+the references.
 
 ## Temperature Prediction
 For temperature prediction, we consider again the Motor Temperature dataset from tutorial 3 and compare the results 
-using the same train, test, and validation split as proposed in [13]. As a regression model, we have used the
-same CNN from Tutorial 3, as it has shown the best performance among all other models. The detailed setup
-files can be found under \setup and the numerical results are tabulated below.
+using the same test IDs (60, 62, 74) and validation IDs (10, 48, 63) as proposed in [13]; all other IDs are used for
+training. As a regression model, we have used the same CNN from Tutorial 3. The setup file is
+setup/journal/Journal_NonLinear.py and the Mean Squared Error (MSE, K²) per test ID is tabulated below (version 0.4).
 
-| Test ID | Time (hrs) | Stator Winding | Stator Tooth | Stator Yoke | Permanent Magnet |
-|---------|------------|----------------|--------------|-------------|------------------|
-| 60      | 1.7        | 4.80           | 3.20         | 1.66        | 30.8             |
-| 62      | 3.3        | 1.06           | 0.62         | 0.40        | 2.13             |
-| 74      | 3.0        | 3.42           | 2.37         | 1.36        | 13.6             |
-| Avg     | 8.0        | 2.74           | 1.82         | 1.03        | 12.5             |
+Settings: the data are resampled from 2 Hz to 0.1 Hz with the mean over each 10 s interval (`setupDat['resample'] =
+'mean'`), so that the window of 600 samples spans 100 min, the order of the thermal time constant of the magnet. The
+validation IDs are held out in full (`rV = 1.0`), and the prediction is the mean of a seed ensemble of three CNNs
+(`setupExp['ensemble'] = 3`, seeds 42-44). Because every window lies within one test ID, the first 100 min of each
+test ID only fill the first window and are not predicted: of the 8.9 h of test recordings, 3.9 h are evaluated
+(ID 60 only its last 0.4 h).
 
+| Test ID | Recorded (hrs) | Evaluated (hrs) | Stator Winding | Stator Tooth | Stator Yoke | Permanent Magnet |
+|---------|----------------|-----------------|----------------|--------------|-------------|------------------|
+| 60      | 2.0            | 0.4             | 6.56           | 2.25         | 6.05        | 1.58             |
+| 62      | 3.6            | 1.9             | 0.54           | 0.39         | 0.21        | 4.79             |
+| 74      | 3.3            | 1.6             | 5.33           | 2.06         | 3.78        | 9.26             |
+| All     | 8.9            | 3.9             | 3.11           | 1.27         | 2.25        | 6.38             |
 
-As can be seen in the Table above the difficulty of estimating the temperatures in the different test IDs varies significantly, 
-with the lowest errors being found in test ID 62 and the highest in test ID60. On average the results are better for
-the stator temperatures, which is in line with the input features being mostly stator quantities. To compare the results
-with the previously published literature a comparison of average errors was made.
+The stator temperatures are predicted with an MAE of 0.9-1.3 K and the magnet temperature with an MAE of 2.0 K
+(R² 0.98, largest error 7.0 K). The window length is decisive for the magnet, which is not measured by any input and
+heats up over tens of minutes. A study at 0.1 Hz with three-network ensembles, evaluated on the same samples, gave
+the following magnet errors:
 
-| REF   | Year | Model | MSE (K^2) | MAX (W)  | Features |
+| Window | Time span | Magnet MAE (K) | Magnet R² | Magnet MAX (K) | Stator MAE (K) |
+|--------|-----------|----------------|-----------|----------------|----------------|
+| 60     | 10 min    | 7.37           | 0.75      | 17.2           | 1.77           |
+| 180    | 30 min    | 4.80           | 0.87      | 13.8           | 1.20           |
+| 360    | 60 min    | 2.98           | 0.95      | 9.8            | 0.74           |
+| 600    | 100 min   | **2.05**       | **0.98**  | **7.0**        | 1.05           |
+
+Mean instead of hold resampling made no difference beyond the spread between the networks (window 60: magnet MAE
+7.72 instead of 7.37 K). The single networks of an ensemble differ little at 0.1 Hz (MAE ± 0.1 K). At 1 Hz with a
+10 min window, single networks with identical settings gave magnet R² between -0.07 and 0.79, which was the result
+of the previous version of this section. To compare the results with the previously published literature a
+comparison of average errors over all four temperatures was made.
+
+| REF   | Year | Model | MSE (K^2) | MAX (K)  | Features |
 |-------|------|-------|-----------|----------|----------|
 | [11]  | 2021 | MLP   | 5.58      | 14.29    | 81       |
 | [11]  | 2021 | OLS   | 4.47      | 9.85     | 81       |
 | [12]  | 2020 | CNN   | 4.43      | 15.54    | 81       |
 | [13]  | 2023 | TNN   | **2.87**  | **6.02** | 15       |
-| PyDTS | 2023 | CNN   | 4.53      | 10.91    | 13       |
+| PyDTS v0.3 | 2023 | CNN   | 4.53      | 10.91    | 13       |
+| PyDTS v0.4 | 2026 | CNN (ensemble of 3) | 3.25 | 7.43 | 13       |
 
-As can be seen in the Table above the results obtained from the baseline CNN model implemented in PyDTS are comparable to 
-the results obtained with other machine- or deep-learning architectures. Only physically informed approaches like thermal
-neural networks [13] perform significantly better.
+The version 0.4 result (MSE 3.25 K², maximum error 7.4 K on the stator yoke in ID 74) is not directly comparable with
+the literature: it is evaluated without the first 100 min of every test ID, whereas the references predict the whole
+test recordings, including the warm-up from ambient temperature. The v0.3 result was obtained with validation data
+that were also used for training, with the variance-scaled normalisation and with windows across ID boundaries (see
+Changes in Version 0.4). The thermal neural network [13], which models the heat flows explicitly and predicts every
+sample, remains the best reference.
 
 # Development
 As failure and mistakes are inextricably linked to human nature, the toolkit is obviously not perfect, 
@@ -232,6 +353,7 @@ The software framework is provided under the Attribution-NonCommercial-NoDerivat
 1) v.0.1: (26.10.2023) Initial version of PyDTS
 2) v.0.2: (24.04.2024) Adding forecasting methodology
 3) v.0.3: (21.05.2024) Updating Python 3.11 and adding new DL models
+4) v.0.4: (25.11.2026) PyTorch instead of TensorFlow (GPU training), Optuna, corrected data split and z-score, retrained models, Streamlit GUI
    
 
 # References

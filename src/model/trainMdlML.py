@@ -16,6 +16,7 @@
 # ==============================================================================
 # Internal
 # ==============================================================================
+from src.general.helpFnc import mdlSize
 
 # ==============================================================================
 # External
@@ -27,6 +28,7 @@ from sklearn.multioutput import MultiOutputRegressor, MultiOutputClassifier
 import joblib
 import numpy as np
 import time
+import os
 from sys import getsizeof
 
 
@@ -47,6 +49,10 @@ def trainMdlML(data, setupPar, setupMdl, setupExp):
     # ==============================================================================
     mdlName = 'mdl/mdl_' + setupPar['model'] + '_' + setupExp['name'] + '.joblib'
     nCPU = -1
+    try:                                                                                                                # '0.1' (GUI text) -> 0.1
+        setupMdl['SK_SVM_gamma'] = float(setupMdl['SK_SVM_gamma'])
+    except (KeyError, TypeError, ValueError):                                                                           # 'scale', 'auto'
+        pass
 
     # ==============================================================================
     # Variables
@@ -134,11 +140,9 @@ def trainMdlML(data, setupPar, setupMdl, setupExp):
     # ==============================================================================
     # Load Model
     # ==============================================================================
-    try:
-        mdl = joblib.load(mdlName)
-        print("INFO: Model exist and will be retrained!")
-    except:
-        joblib.dump(mdl, mdlName)
+    if os.path.exists(mdlName):                                                                                         # fit() starts from scratch:
+        print("INFO: Model exists and is replaced by a new fit with the current settings")                             # the stored model is not loaded
+    else:
         print("INFO: Model does not exist and will be created!")
 
     # ==============================================================================
@@ -167,4 +171,4 @@ def trainMdlML(data, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     print("INFO: Total training time (sec): %.2f" % trainTime)
     print("INFO: Training time per sample (ms): %.2f" % (trainTime / data['T']['X'].shape[0] * 1000))
-    print("INFO: Model size (kB): %.2f" % (getsizeof(mdl) / 1024 / 8))
+    print("INFO: Model size (kB): %.2f" % mdlSize(mdl))

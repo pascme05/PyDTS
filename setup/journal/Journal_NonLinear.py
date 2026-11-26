@@ -61,6 +61,7 @@ setupExp['author'] = 'Pascal Schirmer'                                          
 setupExp['sim'] = 0                                                                                                     # 0) simulation, 1) optimisation hyperparameters, 2) optimising grid
 setupExp['gpu'] = 1                                                                                                     # 0) cpu, 1) gpu
 setupExp['warn'] = 3                                                                                                    # 0) all msg are logged, 1) INFO not logged, 2) INFO and WARN not logged, 3) disabled
+setupExp['ensemble'] = 3                                                                                                # number of networks trained with the seeds seed, seed+1, ... (DL, CL); the test uses their mean prediction
 
 # ------------------------------------------
 # Training/Testing
@@ -88,9 +89,9 @@ setupDat['type'] = 'mat'                                                        
 setupDat['batch'] = 100000                                                                                              # number of samples fed at once to training
 setupDat['Shuffle'] = False                                                                                             # False: no shuffling, True: shuffling data when splitting
 setupDat['rT'] = 0.9                                                                                                    # training proportion (0, 1)
-setupDat['rV'] = 0.1                                                                                                    # validation proportion (0, 1) as percentage from training proportion
+setupDat['rV'] = 1.0                                                                                                    # validation proportion (0, 1] of the validation IDs, held out from training (1: idV used in full)
 setupDat['idT'] = [60, 62, 74]                                                                                          # list of testing ids for method 3)
-setupDat['idV'] = [10, 48, 63]                                                                                          # list of validation ids for method 3)
+setupDat['idV'] = [10, 48, 63]                                                                                          # list of validation ids for method 3): their last rV is validation (if empty or equal to idT: last rV of every training id)
 
 # ------------------------------------------
 # Datasets
@@ -110,7 +111,8 @@ setupDat['fut'] = []                                                            
 # ------------------------------------------
 # Sampling
 # ------------------------------------------
-setupDat['fs'] = 1                                                                                                      # sampling frequency (Hz)
+setupDat['fs'] = 0.1                                                                                                    # sampling frequency (Hz): 0.1 Hz so that the window of 600 samples spans 100 min (magnet time constant)
+setupDat['resample'] = 'mean'                                                                                           # resampling to fs: 'hold' last sample (zero-order hold), 'mean' mean over each new sample interval
 setupDat['lim'] = 0                                                                                                     # 0) data is not limited, x) limited to x samples
 
 # ------------------------------------------

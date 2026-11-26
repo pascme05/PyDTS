@@ -81,8 +81,8 @@ def normVal(X, y):
     minY = np.nanmin(y, axis=0)
     uX = np.nanmean(X, axis=0)
     uY = np.nanmean(y, axis=0)
-    sX = np.nanvar(X, axis=0)
-    sY = np.nanvar(y, axis=0)
+    sX = np.nanstd(X, axis=0)                                                                                           # standard deviation (z-score)
+    sY = np.nanstd(y, axis=0)
 
     return [maxX, maxY, minX, minY, uX, uY, sX, sY]
 
@@ -245,3 +245,124 @@ def balance_window(X, y, window_size=20, step=1, strategy='mean', n_bins=3, n_pe
     y_balanced = y.iloc[selected_time_indices].reset_index(drop=True)
 
     return X_balanced, y_balanced
+
+
+#######################################################################################################################
+# Shift with edge values
+#######################################################################################################################
+def shiftEdge(data, lag, ids=None):
+    """
+    Shifts data along the first axis like np.roll(data, lag), but fills the free samples with the first (lag > 0) or
+    last (lag < 0) value instead of wrapping the other end of the series around. With ids (one per row) every
+    contiguous ID block is shifted on its own, so no value crosses into another ID.
+    """
+    data = np.asarray(data)
+    lag = int(lag)
+    if lag == 0 or len(data) == 0:
+        return data.copy()
+    if ids is not None:
+        ids = np.asarray(ids)[:len(data)]
+        cut = np.r_[0, np.flatnonzero(ids[1:] != ids[:-1]) + 1, len(ids)]
+        if len(cut) > 2:
+            return np.concatenate([shiftEdge(data[cut[k]:cut[k + 1]], lag) for k in range(len(cut) - 1)], axis=0)
+    out = np.roll(data, lag, axis=0)
+    if lag > 0:
+        out[:lag] = data[0]
+    else:
+        out[lag:] = data[-1]
+
+    return out
+
+
+#######################################################################################################################
+# Boolean from config values
+#######################################################################################################################
+def toBool(value):
+    """True for True, 1 and the strings 'True', 'true', '1'; False otherwise (e.g. the string 'False')."""
+    if isinstance(value, str):
+        return value.strip().lower() in ('true', '1', 'yes')
+
+    return bool(value)
+
+
+#######################################################################################################################
+# Random seed
+#######################################################################################################################
+def setSeed(seed, deterministic=True):
+    """
+    Seeds Python, NumPy and PyTorch (weight initialisation, dropout, shuffle order). With deterministic = True the
+    GPU kernels are deterministic too (cuDNN without autotuning, deterministic cuBLAS), so two trainings with the same
+    seed and settings give the same model on the same machine (other GPUs or library versions can still differ).
+    """
+    import random
+    import torch
+    seed = int(seed)
+    if deterministic:
+        os.environ.setdefault('CUBLAS_WORKSPACE_CONFIG', ':4096:8')                                                     # read when cuBLAS starts
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+        torch.use_deterministic_algorithms(True, warn_only=True)
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+
+
+#######################################################################################################################
+# CPU/GPU selection
+#######################################################################################################################
+def setDevice(gpu):
+    """Device of the PyTorch solvers: 'cuda' if gpu == 1 and a CUDA GPU is available, otherwise 'cpu'."""
+    try:
+        import torch
+        if gpu == 1 and torch.cuda.is_available():
+            return 'cuda'
+    except ImportError:
+        pass
+    if gpu == 1:
+        print("WARN: No CUDA GPU found, using the CPU")
+
+    return 'cpu'
+
+
+#######################################################################################################################
+# Model size
+#######################################################################################################################
+def mdlSize(mdl):
+    """Size of the model in kB: 4 bytes per weight for PyTorch models, the pickled size otherwise."""
+    if hasattr(mdl, 'parameters') and callable(mdl.parameters):
+        try:
+            return sum(p.numel() for p in mdl.parameters()) * 4 / 1024
+        except Exception:
+            pass
+    try:
+        import pickle
+        return len(pickle.dumps(mdl)) / 1024
+    except Exception:
+        return float('nan')
+
+
+#######################################################################################################################
+# Sample weights for balancing
+#######################################################################################################################
+def sampleWeights(y, balance):
+    """
+    Per-sample weights that balance the training data: balance = 1 weights the classes (unique values of y), balance
+    = x > 1 weights x equally wide bins of y (regression). For several outputs the first one is used. Returns None for
+    balance <= 0 (-1 balances windows instead, see balance_window).
+    """
+    if balance is None or balance <= 0:
+        return None
+    from sklearn.utils import class_weight
+    v = np.asarray(y, dtype=float)
+    v = v.reshape(v.shape[0], -1)[:, 0]
+    if balance == 1:
+        lab = v
+    else:
+        edges = np.linspace(np.nanmin(v), np.nanmax(v), int(balance) + 1)[1:-1]
+        lab = np.digitize(v, edges)
+    cls = np.unique(lab)
+    w = class_weight.compute_class_weight(class_weight='balanced', classes=cls, y=lab)
+    print("INFO: Balancing %d classes/bins with sample weights %.2f ... %.2f" % (len(cls), w.min(), w.max()))
+
+    return w[np.searchsorted(cls, lab)].astype('float32')
+

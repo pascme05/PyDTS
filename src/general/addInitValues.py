@@ -21,6 +21,7 @@
 # External
 # ==============================================================================
 import numpy as np
+import pandas as pd
 import copy
 
 
@@ -34,43 +35,26 @@ def addInitValues(X, y, idT, setupDat):
     print("INFO: Adding initial values")
 
     ###################################################################################################################
-    # Initialisation
-    ###################################################################################################################
-    # ==============================================================================
-    # Parameters
-    # ==============================================================================
-    T = X.shape[0]
-
-    # ==============================================================================
-    # Variables
-    # ==============================================================================
-    yout = copy.deepcopy(y)
-
-    ###################################################################################################################
     # Calculation
     ###################################################################################################################
     # ==============================================================================
-    # Changes
+    # Initial value of every id block (first output value, held until the id changes)
     # ==============================================================================
-    yout.values[0, :] = y.values[0, :]
-    for i in range(1, T):
-        if idT.T.values[i-1] != idT.T.values[i]:
-            yout.values[i, :] = y.values[i, :]
-        else:
-            yout.values[i, :] = yout.values[i-1, :]
-
-    # ==============================================================================
-    # Appending
-    # ==============================================================================
+    ids = np.asarray(idT)[:X.shape[0]]
+    start = np.r_[True, ids[1:] != ids[:-1]]
+    vals = np.asarray(y, dtype=float)[:X.shape[0]]
+    yout = pd.DataFrame(np.where(start[:, None], vals, np.nan), index=X.index, columns=y.columns).ffill()
+    yout.columns = [str(c) + '_init' for c in y.columns]
     Xout = X.join(yout)
 
-    ###################################################################################################################
-    # Postprocessing
-    ###################################################################################################################
-    setupDat['normMaxX'] = np.append(setupDat['normMaxX'], setupDat['normMaxY'])
-    setupDat['normMinX'] = np.append(setupDat['normMinX'], setupDat['normMinY'])
-    setupDat['normAvgX'] = np.append(setupDat['normAvgX'], setupDat['normAvgY'])
-    setupDat['normVarX'] = np.append(setupDat['normVarX'], setupDat['normVarY'])
+    # ==============================================================================
+    # Normalisation values of the new inputs (only once, preprocess is called repeatedly)
+    # ==============================================================================
+    if len(np.atleast_1d(setupDat['normMaxX'])) == X.shape[1]:
+        setupDat['normMaxX'] = np.append(setupDat['normMaxX'], setupDat['normMaxY'])
+        setupDat['normMinX'] = np.append(setupDat['normMinX'], setupDat['normMinY'])
+        setupDat['normAvgX'] = np.append(setupDat['normAvgX'], setupDat['normAvgY'])
+        setupDat['normVarX'] = np.append(setupDat['normVarX'], setupDat['normVarY'])
 
     ###################################################################################################################
     # Return

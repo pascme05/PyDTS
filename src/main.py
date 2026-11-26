@@ -20,14 +20,13 @@ from src.data.loadData import loadData
 from src.train import train
 from src.test import test
 from src.general.printResults import printResults
+from src.general.helpFnc import setSeed
 
 # ==============================================================================
 # External
 # ==============================================================================
 import copy
 import numpy as np
-import tensorflow as tf
-import random
 import time
 
 
@@ -61,13 +60,12 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
     # Variables
     # ==============================================================================
     tempData = {'T': {}, 'V': {}}
+    result, resultAvg = None, None
 
     # ==============================================================================
     # Seed
     # ==============================================================================
-    random.seed(42)
-    tf.random.set_seed(42)
-    np.random.seed(42)
+    setSeed(setupExp.get('seed', 42))                                                                                   # weight init, dropout, shuffle
 
     ###################################################################################################################
     # k-Fold
@@ -114,7 +112,7 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
                 # Train
                 if setupExp['trainBatch'] == 1:
                     print("INFO: Training using fixed batch size")
-                    for ii in range(0, int(np.floor(data['T']['X'].shape[0] / setupDat['batch']))):
+                    for ii in range(0, int(np.ceil(data['T']['X'].shape[0] / setupDat['batch']))):
                         tempData['T']['X'] = copy.deepcopy(data['T']['X'].iloc[ii * setupDat['batch']:(ii + 1) * setupDat['batch'], :])
                         tempData['T']['y'] = copy.deepcopy(data['T']['y'].iloc[ii * setupDat['batch']:(ii + 1) * setupDat['batch'], :])
                         tempData['V'] = copy.deepcopy(data['V'])
@@ -186,7 +184,8 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
             # ------------------------------------------
             # Total results
             # ------------------------------------------
-            printResults(resultTotal / setupExp['kfold'], resultAvgTotal / setupExp['kfold'], setupDat)
+            [result, resultAvg] = [resultTotal / setupExp['kfold'], resultAvgTotal / setupExp['kfold']]
+            printResults(result, resultAvg, setupDat)
 
         # ==============================================================================
         # MSG IN
@@ -241,7 +240,7 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
                 # Train
                 if setupExp['trainBatch'] == 1:
                     print("INFO: Training using fixed batch size")
-                    for ii in range(0, int(np.floor(data['T']['X'].shape[0] / setupDat['batch']))):
+                    for ii in range(0, int(np.ceil(data['T']['X'].shape[0] / setupDat['batch']))):
                         tempData['T']['X'] = copy.deepcopy(data['T']['X'].iloc[ii * setupDat['batch']:(ii + 1) * setupDat['batch'], :])
                         tempData['T']['y'] = copy.deepcopy(data['T']['y'].iloc[ii * setupDat['batch']:(ii + 1) * setupDat['batch'], :])
                         tempData['V'] = copy.deepcopy(data['V'])
@@ -289,7 +288,7 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
             # ------------------------------------------
             # Test
             # ------------------------------------------
-            test(data, setupExp, setupDat, setupPar, setupMdl, setupPath)
+            [result, resultAvg] = test(data, setupExp, setupDat, setupPar, setupMdl, setupPath)
 
         # ==============================================================================
         # MSG IN
@@ -306,7 +305,7 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
         # MSG IN
         # ==============================================================================
         print("=======================================================================")
-        print("START: PyDTS 1-fold simulation")
+        print("START: PyDTS %s simulation" % ('ID based' if method == 3 else '1-fold'))
         print("=======================================================================")
 
         # ==============================================================================
@@ -337,7 +336,7 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
             # ------------------------------------------
             if setupExp['trainBatch'] == 1:
                 print("INFO: Training using fixed batch size")
-                for i in range(0, int(np.floor(data['T']['X'].shape[0]/setupDat['batch']))):
+                for i in range(0, int(np.ceil(data['T']['X'].shape[0] / setupDat['batch']))):
                     tempData['T']['X'] = copy.deepcopy(data['T']['X'].iloc[i*setupDat['batch']:(i+1)*setupDat['batch'], :])
                     tempData['T']['y'] = copy.deepcopy(data['T']['y'].iloc[i * setupDat['batch']:(i + 1) * setupDat['batch'], :])
                     tempData['V'] = copy.deepcopy(data['V'])
@@ -384,11 +383,16 @@ def main(setupExp, setupDat, setupPar, setupMdl, setupPath):
             # ------------------------------------------
             # Calc
             # ------------------------------------------
-            test(data, setupExp, setupDat, setupPar, setupMdl, setupPath)
+            [result, resultAvg] = test(data, setupExp, setupDat, setupPar, setupMdl, setupPath)
 
         # ==============================================================================
         # MSG IN
         # ==============================================================================
         print("=======================================================================")
-        print("DONE: PyDTS 1-fold simulation")
+        print("DONE: PyDTS %s simulation" % ('ID based' if method == 3 else '1-fold'))
         print("=======================================================================")
+
+    ###################################################################################################################
+    # Return
+    ###################################################################################################################
+    return [result, resultAvg]

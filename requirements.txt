@@ -2,14 +2,13 @@ pandas==2.2.2
 numpy==1.24.3
 scipy==1.13.0
 scikit-learn==1.5.0
-tensorflow==2.13.1
+torch==2.1.2  # CUDA build: pip install torch==2.1.2 --index-url https://download.pytorch.org/whl/cu121
 joblib==1.4.2
 tfest==0.2.3
 nfoursid==1.0.1
 matplotlib==3.9.0
 seaborn==0.13.2
 openpyxl==3.1.2
-keras-tuner==1.4.7
+optuna==4.4.0
 texttable==1.7.0
 neuralforecast==1.7.2
-tensorflow-probability==0.20.0

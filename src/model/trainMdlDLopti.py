@@ -5,10 +5,19 @@
 # File:         trainMdlDLopti
 # Date:         03.11.2023
 # Author:       Dr. Pascal A. Schirmer
-# Version:      V.0.1
+# Version:      V.0.2
 # Copyright:    Pascal Schirmer
 #######################################################################################################################
 #######################################################################################################################
+
+#######################################################################################################################
+# Function Description
+#######################################################################################################################
+"""
+Hyperparameter optimisation of the DL models with Optuna (TPE sampler, Hyperband pruning). The search space follows
+the configured model (CNN, LSTM or DNN, see models.optiMdl). Every trial trains up to setupMdl['epoch'] epochs; the
+best trial is retrained and stored in mdl/mdl_opt_<model>_<name>/ (model.pt, best_params.json, trials.csv).
+"""
 
 #######################################################################################################################
 # Import libs
@@ -16,18 +25,18 @@
 # ==============================================================================
 # Internal
 # ==============================================================================
+from src.general.helpFnc import sampleWeights, toBool
 from src.general.helpFnc import reshapeMdlData
-from src.model.models import tfMdloptiR, tfMdloptiC
+from src.model.models import optiMdl
+from src.model import torchFit as tfit
 
 # ==============================================================================
 # External
 # ==============================================================================
-import tensorflow as tf
-import keras_tuner as kt
-import numpy as np
+import json
 import os
-import datetime
-from sklearn.utils import class_weight
+
+import optuna
 
 
 #######################################################################################################################
@@ -42,101 +51,59 @@ def trainMdlDLopti(data, setupDat, setupPar, setupMdl, setupExp):
     ###################################################################################################################
     # Initialisation
     ###################################################################################################################
-    # ==============================================================================
-    # CPU/GPU
-    # ==============================================================================
-    if setupExp['gpu'] == 1:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '0'
-        physical_devices = tf.config.list_physical_devices('GPU')
-        tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    else:
-        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
-        tf.config.set_visible_devices([], 'GPU')
-
-    # ==============================================================================
-    # Parameters
-    # ==============================================================================
-    BATCH_SIZE = setupMdl['batch']
-    BUFFER_SIZE = data['T']['X'].shape[0]
-    EVAL = int(np.floor(BUFFER_SIZE / BATCH_SIZE))
-    EPOCHS = setupMdl['epoch']
-    VALSTEPS = setupMdl['valsteps']
-    VERBOSE = setupMdl['verbose']
-    SHUFFLE = setupMdl['shuffle']
-
-    # ==============================================================================
-    # Name
-    # ==============================================================================
-    mdlName = 'mdl_opt_' + setupPar['model'] + '_' + setupExp['name']
-
-    # ==============================================================================
-    # Callbacks
-    # ==============================================================================
-    callbacks = [
-        tf.keras.callbacks.EarlyStopping(monitor='loss', patience=setupMdl['patience'], restore_best_weights=True),
-        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', verbose=1, factor=0.5,
-                                             patience=int(setupMdl['patience'] / 2), min_lr=1e-9)]
+    dev = tfit.device(setupExp['gpu'])
+    save_dir = os.path.join('mdl', 'mdl_opt_' + setupPar['model'] + '_' + setupExp['name'])
+    os.makedirs(save_dir, exist_ok=True)
+    nTrials = int(setupMdl.get('trials', 30))
+    shuffle = toBool(setupMdl['shuffle'])
 
     ###################################################################################################################
     # Pre-Processing
     ###################################################################################################################
-    # ==============================================================================
-    # Balance Data
-    # ==============================================================================
-    if setupDat['balance'] == 1:
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(data['T']['y']), y=data['T']['y'])
-    elif setupDat['balance'] > 1:
-        temp = np.digitize(data['T']['y'], bins=[setupDat['balance']])
-        class_weights = class_weight.compute_class_weight(class_weight='balanced', classes=np.unique(temp), y=temp)
-    else:
-        class_weights = []
-
-    # ==============================================================================
-    # Reshape Data
-    # ==============================================================================
+    weights = sampleWeights(data['T']['y'], setupDat['balance'])
     [data['T']['X'], data['T']['y']] = reshapeMdlData(data['T']['X'], data['T']['y'], setupDat, setupPar, 0)
     [data['V']['X'], data['V']['y']] = reshapeMdlData(data['V']['X'], data['V']['y'], setupDat, setupPar, 0)
-
-    # ==============================================================================
-    # Callbacks
-    # ==============================================================================
-    if setupExp['log'] == 1:
-        log_dir = "mdl/" + mdlName + "/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-        callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1))
+    T, V = (data['T']['X'], data['T']['y']), (data['V']['X'], data['V']['y'])
+    shape = data['T']['X'].shape[1:]
+    out = tfit.outDim(data['T']['y'], setupDat, setupPar)
+    activation = 'linear' if setupPar['method'] == 0 else 'sigmoid'
 
     ###################################################################################################################
-    # Calculation
+    # Search
     ###################################################################################################################
-    # ==============================================================================
-    # Tuner
-    # ==============================================================================
-    if setupPar['method'] == 0:
-        tuner = kt.Hyperband(tfMdloptiR, objective=kt.Objective("val_loss", direction="min"),
-                             max_epochs=EPOCHS, factor=3, overwrite=True, directory='mdl', project_name=mdlName)
-    else:
-        tuner = kt.Hyperband(tfMdloptiC, objective=kt.Objective("val_loss", direction="min"),
-                             max_epochs=EPOCHS, factor=3, overwrite=True, directory='mdl', project_name=mdlName)
+    def objective(trial):
+        mdl, lr = optiMdl(trial, setupPar['model'], shape, out, activation)
+        hist = tfit.fit(mdl, T, V, setupMdl, None, None, dev, weights=weights, shuffle=shuffle, verbose=0, lr=lr,
+                        log=False, trial=trial)
+        best = min(h['val_loss'] for h in hist)
+        print("INFO: Trial %d: val_loss %.4g after %d epochs, %s" % (trial.number, best, len(hist), trial.params),
+              flush=True)
+        return best
 
-    # ==============================================================================
-    # Optimiser
-    # ==============================================================================
-    tuner.search(data['T']['X'], data['T']['y'], epochs=EPOCHS, validation_data=(data['V']['X'], data['V']['y']),
-                 steps_per_epoch=EVAL, validation_steps=VALSTEPS, use_multiprocessing=True, verbose=VERBOSE,
-                 shuffle=SHUFFLE, batch_size=BATCH_SIZE, callbacks=callbacks)
-    best_hps = tuner.get_best_hyperparameters(num_trials=1)[0]
+    optuna.logging.set_verbosity(optuna.logging.WARNING)
+    study = optuna.create_study(direction='minimize', sampler=optuna.samplers.TPESampler(seed=42),
+                                pruner=optuna.pruners.HyperbandPruner(min_resource=1,
+                                                                      max_resource=int(setupMdl['epoch']),
+                                                                      reduction_factor=3))
+    study.optimize(objective, n_trials=nTrials)
 
-    # ==============================================================================
-    # Training
-    # ==============================================================================
-    mdl = tuner.hypermodel.build(best_hps)
-    history = mdl.fit(data['T']['X'], data['T']['y'], epochs=EPOCHS, validation_data=(data['V']['X'], data['V']['y']),
-                      steps_per_epoch=EVAL, validation_steps=VALSTEPS, use_multiprocessing=True, verbose=VERBOSE,
-                      shuffle=SHUFFLE, batch_size=BATCH_SIZE, callbacks=callbacks, class_weight=class_weights)
+    ###################################################################################################################
+    # Best model
+    ###################################################################################################################
+    print("INFO: Best trial %d: val_loss %.4g, %s" % (study.best_trial.number, study.best_value, study.best_params))
+    mdl, lr = optiMdl(optuna.trial.FixedTrial(study.best_params), setupPar['model'], shape, out, activation)
+    info = {'model': 'opt_' + setupPar['model'], 'shape': [int(s) for s in shape], 'out': int(out),
+            'method': int(setupPar['method']), 'params': study.best_params}
+    hist = tfit.fit(mdl, T, V, setupMdl, os.path.join(save_dir, 'model.pt'), info, dev, weights=weights,
+                    shuffle=shuffle, verbose=setupMdl['verbose'], lr=lr)
 
     ###################################################################################################################
     # Output
     ###################################################################################################################
-    mdl.summary()
-    val_acc_per_epoch = history.history['loss']
-    best_epoch = val_acc_per_epoch.index(max(val_acc_per_epoch)) + 1
-    print('Best epoch: %d' % (best_epoch,))
+    with open(os.path.join(save_dir, 'best_params.json'), 'w') as f:
+        json.dump({'params': study.best_params, 'val_loss': study.best_value,
+                   'retrained_val_loss': min(h['val_loss'] for h in hist)}, f, indent=2)
+    study.trials_dataframe().to_csv(os.path.join(save_dir, 'trials.csv'), index=False)
+    print(mdl)
+    print("INFO: Best epoch: %d" % (min(range(len(hist)), key=lambda i: hist[i]['val_loss']) + 1))
+    print("INFO: Model size (kB): %.2f" % tfit.mdlSize(mdl))

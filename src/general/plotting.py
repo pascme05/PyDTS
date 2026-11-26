@@ -261,7 +261,7 @@ def plotting(dataRaw, data, dataPred, resultsAvg, feaScore, feaError, setupDat, 
         plt.title('Learning Rate')
         plt.grid(True)
 
-    except:
+    except Exception:
         print("WARN: Could not load training log file.")
 
     # ==============================================================================

@@ -18,7 +18,7 @@
 # Internal
 # ==============================================================================
 from src.preprocess import preprocess
-from src.general.framing import framing
+from src.general.framing import framing, frameIds
 from src.general.features import features
 from src.general.createSeq import createSeq
 from src.model.trainMdlDL import trainMdlDL
@@ -28,12 +28,33 @@ from src.model.trainMdlSF import trainMdlSF
 from src.model.trainMdlCL import trainMdlCL
 from src.general.adaptDim import adaptDim
 from src.data.summaryData import summaryData
-from src.general.helpFnc import balance_window
+from src.general.helpFnc import balance_window, setSeed
 
 # ==============================================================================
 # External
 # ==============================================================================
 import copy
+
+
+#######################################################################################################################
+# Helper
+#######################################################################################################################
+def members(setupExp):
+    """
+    Settings of the members of a seed ensemble (setupExp['ensemble'] = N networks, DL and CL): member k is trained with
+    the seed seed + k and stored as model.pt (k = 0) or model_<k+1>.pt. The test averages the predictions of all members.
+    """
+    n, seed = max(1, int(setupExp.get('ensemble', 1))), int(setupExp.get('seed', 42))
+    for k in range(n):
+        if n > 1:
+            print("INFO: Ensemble member %d/%d (seed %d)" % (k + 1, n, seed + k))
+        setSeed(seed + k)
+        yield dict(setupExp, member=k)
+
+
+def shallow(data):
+    """Copy of the set dictionaries, the models replace their arrays (reshaping) without changing the original."""
+    return {k: dict(v) for k, v in data.items()}
 
 
 #######################################################################################################################
@@ -69,8 +90,8 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # ==============================================================================
     # Calc
     # ==============================================================================
-    [data['T'], t, _] = preprocess(data['T'], copy.deepcopy(setupDat), setupPar)
-    [data['V'], _, _] = preprocess(data['V'], setupDat, setupPar)
+    [data['T'], t, idsT] = preprocess(data['T'], copy.deepcopy(setupDat), setupPar)
+    [data['V'], _, idsV] = preprocess(data['V'], setupDat, setupPar)
 
     # ==============================================================================
     # Balancing
@@ -81,6 +102,7 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
         [data['V']['X'], data['V']['y']] = balance_window(data['V']['X'], data['V']['y'], window_size=setupMdl['batch'],
                                                           step=setupMdl['batch'], strategy='avg', n_bins=3, n_per_bin=10)
         print("INFO: Data equally balanced")
+        [idsT, idsV] = [None, None]                                                                                     # rows re-ordered
     else:
         print("INFO: Data is not balanced")
 
@@ -104,15 +126,18 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # ==============================================================================
     if setupPar['frame'] == 1:
         if setupPar['overlap'] == -1:
-            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], 0)
-            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], 0)
-            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], 0)
-            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], 0)
+            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], 0, idsT)
+            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], 0, idsT)
+            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], 0, idsV)
+            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], 0, idsV)
         else:
-            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'])
-            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'])
-            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'])
-            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'])
+            dataTrain['T']['X'] = framing(data['T']['X'], setupPar['window'], setupPar['overlap'], idsT)
+            dataTrain['T']['y'] = framing(data['T']['y'], setupPar['window'], setupPar['overlap'], idsT)
+            dataTrain['V']['X'] = framing(data['V']['X'], setupPar['window'], setupPar['overlap'], idsV)
+            dataTrain['V']['y'] = framing(data['V']['y'], setupPar['window'], setupPar['overlap'], idsV)
+        ov = 0 if setupPar['overlap'] == -1 else setupPar['overlap']
+        dataTrain['T']['id'] = frameIds(idsT, len(data['T']['y']), setupPar['window'], ov)                              # ID per frame (CL)
+        dataTrain['V']['id'] = frameIds(idsV, len(data['V']['y']), setupPar['window'], ov)
     else:
         dataTrain['T']['X'] = data['T']['X'].values
         dataTrain['T']['y'] = data['T']['y'].values
@@ -206,7 +231,8 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # Deep Learning
     # ------------------------------------------
     elif setupPar['solver'] == 'DL':
-        trainMdlDL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+        for e in members(setupExp):
+            trainMdlDL(shallow(dataTrain), setupDat, setupPar, setupMdl, e)
 
     # ------------------------------------------
     # Short-Time-Forecasting
@@ -218,7 +244,8 @@ def train(data, setupExp, setupDat, setupPar, setupMdl):
     # Closed Loop Modeling
     # ------------------------------------------
     elif setupPar['solver'] == 'CL':
-        trainMdlCL(dataTrain, setupDat, setupPar, setupMdl, setupExp)
+        for e in members(setupExp):
+            trainMdlCL(shallow(dataTrain), setupDat, setupPar, setupMdl, e)
 
     ###################################################################################################################
     # MSG Out

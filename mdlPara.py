@@ -41,7 +41,7 @@ def mdlPara(setupMdl):
     setupMdl['epoch'] = 100                                                                                             # number of epochs for training
     setupMdl['patience'] = 15                                                                                           # number of epochs as patience during training
     setupMdl['valsteps'] = 50                                                                                           # number of validation steps
-    setupMdl['shuffle'] = 'False'                                                                                       # shuffling data before training (after splitting data)
+    setupMdl['shuffle'] = 'True'                                                                                        # shuffling data before training (after splitting data)
     setupMdl['verbose'] = 2                                                                                             # level of detail for showing training information (0 silent)
 
     # ==============================================================================
@@ -92,7 +92,7 @@ def mdlPara(setupMdl):
     # ------------------------------------------
     setupMdl['SK_SVM_kernel'] = 'rbf'                                                                                   # kernel function of the SVM ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’
     setupMdl['SK_SVM_C'] = 100                                                                                          # regularization
-    setupMdl['SK_SVM_gamma'] = 0.1                                                                                      # kernel coefficient
+    setupMdl['SK_SVM_gamma'] = 'scale'                                                                                  # kernel coefficient: 'scale' = 1/(number of features * variance), or a number
     setupMdl['SK_SVM_epsilon'] = 0.1
 
     # ------------------------------------------
